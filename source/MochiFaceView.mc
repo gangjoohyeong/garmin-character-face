@@ -28,7 +28,6 @@ class MochiFaceView extends WatchUi.WatchFace {
     private var _ox as Number = 0;
     private var _oy as Number = 0;
     private var _lowPower as Boolean = false;
-    private var _burnIn as Boolean = false;
 
     // 걸음 링 눈금 위치 (60개)
     private var _ringX as Array<Number> = [] as Array<Number>;
@@ -117,10 +116,6 @@ class MochiFaceView extends WatchUi.WatchFace {
     function initialize() {
         WatchFace.initialize();
         Settings.load();
-        var ds = System.getDeviceSettings();
-        if (ds has :requiresBurnInProtection) {
-            _burnIn = ds.requiresBurnInProtection;
-        }
     }
 
     function onLayout(dc as Dc) as Void {
@@ -156,7 +151,14 @@ class MochiFaceView extends WatchUi.WatchFace {
         _sec = clock.sec;
         var ci = Settings.currentCharacter();
 
-        if (_lowPower && _burnIn) {
+        var mode = displayMode();
+        if (mode == 2) {
+            // 화면 꺼짐: 아무것도 켜지 않음
+            dc.setColor(0x000000, 0x000000);
+            dc.clear();
+            return;
+        }
+        if (mode == 1) {
             drawAod(dc, clock, ci);
             return;
         }
@@ -198,6 +200,28 @@ class MochiFaceView extends WatchUi.WatchFace {
         } else {
             drawDigitalFace(dc, clock, scene, ci, frame, bob, flicker, anim);
         }
+    }
+
+    // 0 켜짐, 1 AOD(항상 켜짐, 번인 규칙 적용), 2 꺼짐
+    // API 5.0+ (FR265 등): System.getDisplayMode 로 판단 (공식 권장 방식)
+    // 그 전 기기: 저전력 상태 + 번인 보호 필요 여부를 매번 새로 읽어서 판단
+    private function displayMode() as Number {
+        if (System has :getDisplayMode) {
+            var m = System.getDisplayMode();
+            if (m == System.DISPLAY_MODE_LOW_POWER) {
+                return 1;
+            } else if (m == System.DISPLAY_MODE_OFF) {
+                return 2;
+            }
+            return 0;
+        }
+        if (_lowPower) {
+            var ds = System.getDeviceSettings();
+            if ((ds has :requiresBurnInProtection) && ds.requiresBurnInProtection) {
+                return 1;
+            }
+        }
+        return 0;
     }
 
     // ---- 시간대 ----
