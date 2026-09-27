@@ -10,7 +10,22 @@
             <listEntry value="0">@Strings.CharMochi</listEntry>
             <listEntry value="1">@Strings.CharSquirtle</listEntry>
             <listEntry value="2">@Strings.CharCharmander</listEntry>
-            <listEntry value="3">@Strings.CharRandom</listEntry>
+            <listEntry value="3">@Strings.CharDorongi</listEntry>
+            <listEntry value="4">@Strings.CharRandom</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.CharStyle" title="@Strings.CharStyleTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.CharStyleAuto</listEntry>
+            <listEntry value="1">@Strings.StylePixel</listEntry>
+            <listEntry value="2">@Strings.StyleDigital</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.CharSize" title="@Strings.CharSizeTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.SizeS</listEntry>
+            <listEntry value="1">@Strings.SizeM</listEntry>
+            <listEntry value="2">@Strings.SizeL</listEntry>
         </settingConfig>
     </setting>
     <setting propertyKey="@Properties.Background" title="@Strings.BgTitle">
@@ -23,7 +38,113 @@
             <listEntry value="5">@Strings.BgSimple</listEntry>
         </settingConfig>
     </setting>
+    <setting propertyKey="@Properties.Accent" title="@Strings.AccentTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.ColorAuto</listEntry>
+            <listEntry value="1">@Strings.ColorPink</listEntry>
+            <listEntry value="2">@Strings.ColorSky</listEntry>
+            <listEntry value="3">@Strings.ColorOrange</listEntry>
+            <listEntry value="4">@Strings.ColorMint</listEntry>
+            <listEntry value="5">@Strings.ColorPurple</listEntry>
+            <listEntry value="6">@Strings.ColorYellow</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.TimeColor" title="@Strings.TimeColorTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.ColorWhite</listEntry>
+            <listEntry value="1">@Strings.ColorAccent</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.Ring" title="@Strings.RingTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.DataSteps</listEntry>
+            <listEntry value="1">@Strings.DataBattery</listEntry>
+            <listEntry value="2">@Strings.DataBB</listEntry>
+            <listEntry value="3">@Strings.RingSeconds</listEntry>
+            <listEntry value="4">@Strings.Off</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.Slot1" title="@Strings.Slot1Title">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.DataNone</listEntry>
+            <listEntry value="1">@Strings.DataHR</listEntry>
+            <listEntry value="2">@Strings.DataBB</listEntry>
+            <listEntry value="3">@Strings.DataSteps</listEntry>
+            <listEntry value="4">@Strings.DataBattery</listEntry>
+            <listEntry value="5">@Strings.DataCalories</listEntry>
+            <listEntry value="6">@Strings.DataDistance</listEntry>
+            <listEntry value="7">@Strings.DataFloors</listEntry>
+            <listEntry value="8">@Strings.DataStress</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.Slot2" title="@Strings.Slot2Title">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.DataNone</listEntry>
+            <listEntry value="1">@Strings.DataHR</listEntry>
+            <listEntry value="2">@Strings.DataBB</listEntry>
+            <listEntry value="3">@Strings.DataSteps</listEntry>
+            <listEntry value="4">@Strings.DataBattery</listEntry>
+            <listEntry value="5">@Strings.DataCalories</listEntry>
+            <listEntry value="6">@Strings.DataDistance</listEntry>
+            <listEntry value="7">@Strings.DataFloors</listEntry>
+            <listEntry value="8">@Strings.DataStress</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.Slot3" title="@Strings.Slot3Title">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.DataNone</listEntry>
+            <listEntry value="1">@Strings.DataHR</listEntry>
+            <listEntry value="2">@Strings.DataBB</listEntry>
+            <listEntry value="3">@Strings.DataSteps</listEntry>
+            <listEntry value="4">@Strings.DataBattery</listEntry>
+            <listEntry value="5">@Strings.DataCalories</listEntry>
+            <listEntry value="6">@Strings.DataDistance</listEntry>
+            <listEntry value="7">@Strings.DataFloors</listEntry>
+            <listEntry value="8">@Strings.DataStress</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.Slot4" title="@Strings.Slot4Title">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.DataNone</listEntry>
+            <listEntry value="1">@Strings.DataHR</listEntry>
+            <listEntry value="2">@Strings.DataBB</listEntry>
+            <listEntry value="3">@Strings.DataSteps</listEntry>
+            <listEntry value="4">@Strings.DataBattery</listEntry>
+            <listEntry value="5">@Strings.DataCalories</listEntry>
+            <listEntry value="6">@Strings.DataDistance</listEntry>
+            <listEntry value="7">@Strings.DataFloors</listEntry>
+            <listEntry value="8">@Strings.DataStress</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.ShowDate" title="@Strings.DateTitle">
+        <settingConfig type="boolean" />
+    </setting>
+    <setting propertyKey="@Properties.DateLang" title="@Strings.DateLangTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.LangAuto</listEntry>
+            <listEntry value="1">@Strings.LangEng</listEntry>
+            <listEntry value="2">@Strings.LangKor</listEntry>
+        </settingConfig>
+    </setting>
     <setting propertyKey="@Properties.Animate" title="@Strings.AnimTitle">
         <settingConfig type="boolean" />
+    </setting>
+    <setting propertyKey="@Properties.SleepAt" title="@Strings.SleepTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.H21</listEntry>
+            <listEntry value="1">@Strings.H22</listEntry>
+            <listEntry value="2">@Strings.H23</listEntry>
+            <listEntry value="3">@Strings.H0</listEntry>
+            <listEntry value="4">@Strings.H1</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.WakeAt" title="@Strings.WakeTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.H5</listEntry>
+            <listEntry value="1">@Strings.H6</listEntry>
+            <listEntry value="2">@Strings.H7</listEntry>
+            <listEntry value="3">@Strings.H8</listEntry>
+            <listEntry value="4">@Strings.H9</listEntry>
+        </settingConfig>
     </setting>
 </settings>

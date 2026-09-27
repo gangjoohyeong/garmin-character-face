@@ -1,5 +1,5 @@
 // 워치 코드(source/*.mc)를 그대로 옮긴 미리보기 렌더러.
-// MochiFaceView.mc 를 수정하면 이 파일도 같이 맞춰 주세요.
+// MochiFaceView.mc / Pix.mc / Smooth.mc 를 수정하면 이 파일도 같이 맞춰 주세요.
 (function () {
   const S = window.SPRITES;
   const TRANSPARENT = -1;
@@ -8,13 +8,13 @@
   class Dc {
     constructor(ctx, w, h) { this.ctx = ctx; this.w = w; this.h = h; this.fg = 0xffffff; this.bg = 0; this.pen = 1; }
     hex(c) { return '#' + (c >>> 0).toString(16).padStart(6, '0'); }
-    getWidth() { return this.w; }
-    getHeight() { return this.h; }
     setColor(fg, bg) { this.fg = fg; if (bg !== undefined && bg !== TRANSPARENT) this.bg = bg; }
     clear() { this.ctx.fillStyle = this.hex(this.bg); this.ctx.fillRect(0, 0, this.w, this.h); }
     fillRectangle(x, y, w, h) { this.ctx.fillStyle = this.hex(this.fg); this.ctx.fillRect(x, y, w, h); }
-    fillCircle(x, y, r) { const c = this.ctx; c.fillStyle = this.hex(this.fg); c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill(); }
+    fillCircle(x, y, r) { const c = this.ctx; c.fillStyle = this.hex(this.fg); c.beginPath(); c.arc(x, y, Math.max(0, r), 0, Math.PI * 2); c.fill(); }
+    fillEllipse(x, y, a, b) { const c = this.ctx; c.fillStyle = this.hex(this.fg); c.beginPath(); c.ellipse(x, y, Math.max(0, a), Math.max(0, b), 0, 0, Math.PI * 2); c.fill(); }
     setPenWidth(p) { this.pen = p; }
+    drawLine(x1, y1, x2, y2) { const c = this.ctx; c.strokeStyle = this.hex(this.fg); c.lineWidth = this.pen; c.lineCap = 'round'; c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke(); }
     // Garmin: 0도 = 3시, 반시계 방향이 +
     drawArc(x, y, r, dir, a0, a1) {
       const c = this.ctx; c.strokeStyle = this.hex(this.fg); c.lineWidth = this.pen; c.lineCap = 'butt';
@@ -32,6 +32,7 @@
     NUMBER_MEDIUM: '700 64px "Roboto Condensed", "Arial Narrow", sans-serif',
     NUMBER_HOT: '700 92px "Roboto Condensed", "Arial Narrow", sans-serif',
   };
+  const T = Math.trunc;
 
   // ---- Pix 모듈 ----
   const Pix = {
@@ -72,36 +73,90 @@
       }
     },
     drawTextShadow(dc, t, cx, y, s, color, shadow) {
-      const x = cx - Math.trunc(Pix.textWidth(t, s) / 2);
+      const x = cx - T(Pix.textWidth(t, s) / 2);
       dc.setColor(shadow, TRANSPARENT); Pix.drawText(dc, t, x + s, y + s, s);
       dc.setColor(color, TRANSPARENT); Pix.drawText(dc, t, x, y, s);
     },
-    drawBigDigit(dc, d, x, y, s) {
-      const rows = S.font.big[d];
-      for (let r = 0; r < 7; r++) {
+    drawRows(dc, rows, cols, x, y, s) {
+      for (let r = 0; r < rows.length; r++) {
         const m = rows[r]; let c = 0;
-        while (c < 5) {
-          if ((m >> c) & 1) { const st = c; while (c < 5 && ((m >> c) & 1)) c++; dc.fillRectangle(x + st * s, y + r * s, (c - st) * s, s); }
+        while (c < cols) {
+          if ((m >> c) & 1) { const st = c; while (c < cols && ((m >> c) & 1)) c++; dc.fillRectangle(x + st * s, y + r * s, (c - st) * s, s); }
           else c++;
         }
       }
     },
+    drawBigDigit(dc, d, x, y, s) { Pix.drawRows(dc, S.font.big[d], 5, x, y, s); },
+    drawHangul(dc, idx, x, y, s) { Pix.drawRows(dc, S.font.hangul[idx], 7, x, y, s); },
+    koDate(dc, month, day, dow, x, y, sd, sh, draw) {
+      let cx = x; const dy = y + 10 * sh - 5 * sd, space = sh * 3;
+      if (month > 0) {
+        const m = String(month);
+        if (draw) Pix.drawText(dc, m, cx, dy, sd);
+        cx += Pix.textWidth(m, sd) + sd;
+        if (draw) Pix.drawHangul(dc, 1, cx, y, sh);
+        cx += 7 * sh + space;
+      }
+      const d = String(day);
+      if (draw) Pix.drawText(dc, d, cx, dy, sd);
+      cx += Pix.textWidth(d, sd) + sd;
+      if (draw) Pix.drawHangul(dc, 0, cx, y, sh);
+      cx += 7 * sh + space;
+      if (draw) Pix.drawHangul(dc, dow, cx, y, sh);
+      cx += 7 * sh;
+      return cx - x;
+    },
+    drawKoDate(dc, month, day, dow, cx, y, sd, sh, color, shadow) {
+      const x = cx - T(Pix.koDate(dc, month, day, dow, 0, 0, sd, sh, false) / 2);
+      if (shadow >= 0) { dc.setColor(shadow, TRANSPARENT); Pix.koDate(dc, month, day, dow, x + sh, y + sh, sd, sh, true); }
+      dc.setColor(color, TRANSPARENT); Pix.koDate(dc, month, day, dow, x, y, sd, sh, true);
+    },
     drawTime(dc, h, m, cx, y, s, colon, leadingZero) {
-      const x = cx - Math.trunc(27 * s / 2);
-      if (h >= 10 || leadingZero) Pix.drawBigDigit(dc, Math.trunc(h / 10), x, y, s);
+      const x = cx - T(27 * s / 2);
+      if (h >= 10 || leadingZero) Pix.drawBigDigit(dc, T(h / 10), x, y, s);
       Pix.drawBigDigit(dc, h % 10, x + 6 * s, y, s);
       if (colon) { dc.fillRectangle(x + 13 * s, y + 2 * s, s, s); dc.fillRectangle(x + 13 * s, y + 4 * s, s, s); }
-      Pix.drawBigDigit(dc, Math.trunc(m / 10), x + 16 * s, y, s);
+      Pix.drawBigDigit(dc, T(m / 10), x + 16 * s, y, s);
       Pix.drawBigDigit(dc, m % 10, x + 22 * s, y, s);
     },
     disc(dc, cx, cy, r, u) {
       for (let dy = -r; dy < r; dy += u) {
-        const mid = dy + Math.trunc(u / 2); const sq = r * r - mid * mid;
-        if (sq > 0) { let hw = Math.trunc(Math.sqrt(sq)); hw = Math.trunc((hw + Math.trunc(u / 2)) / u) * u; dc.fillRectangle(cx - hw, cy + dy, hw * 2, u); }
+        const mid = dy + T(u / 2); const sq = r * r - mid * mid;
+        if (sq > 0) { let hw = T(Math.sqrt(sq)); hw = T((hw + T(u / 2)) / u) * u; dc.fillRectangle(cx - hw, cy + dy, hw * 2, u); }
       }
     },
   };
-  const ICON_HEART = 0, ICON_BOLT = 1, ICON_STEPS = 2, ICON_BATT = 3;
+  const ICON = { HEART: 0, BOLT: 1, STEPS: 2, BATT: 3, FLAME: 4, PIN: 5, STAIRS: 6, WAVE: 7 };
+
+  // ---- Smooth 모듈 (벡터 캐릭터) ----
+  const Smooth = {
+    drawCharacter(dc, ci, frame, x, y, size, flicker, override) {
+      const m = S.smooth[ci], k = size / 1000;
+      let grow = T(size * 0.03); if (grow < 2) grow = 2;
+      const outline = override >= 0 ? override : m.outline;
+      Smooth.shapes(dc, m.body, x, y, k, grow, outline);
+      Smooth.shapes(dc, m.body, x, y, k, 0, override >= 0 ? 0 : -1);
+      if (override < 0) {
+        if (flicker && m.extra.length > 0) { Smooth.shapes(dc, m.extra, x, y, k, grow, outline); Smooth.shapes(dc, m.extra, x, y, k, 0, -1); }
+        Smooth.shapes(dc, m.detail, x, y, k, 0, -1);
+      }
+      Smooth.shapes(dc, m.face[frame], x, y, k, 0, override);
+      dc.setPenWidth(1);
+    },
+    shapes(dc, list, x, y, k, grow, color) {
+      for (const sh of list) {
+        const t = sh[0];
+        if (grow > 0 && t >= 4) continue;
+        dc.setColor(color >= 0 ? color : sh[1], TRANSPARENT);
+        const cx = x + T(sh[2] * k), cy = y + T(sh[3] * k);
+        if (t === 0) dc.fillCircle(cx, cy, T(sh[4] * k) + grow);
+        else if (t === 1) dc.fillEllipse(cx, cy, T(sh[4] * k) + grow, T(sh[5] * k) + grow);
+        else if (t === 4) { dc.setPenWidth(Smooth.pen(sh[5], k)); dc.drawArc(cx, cy, T(sh[4] * k), 'ccw', sh[6], sh[7]); }
+        else if (t === 5) { dc.setPenWidth(Smooth.pen(sh[6], k)); dc.drawLine(cx, cy, x + T(sh[4] * k), y + T(sh[5] * k)); }
+      }
+    },
+    pen(w, k) { const p = T(w * k + 0.5); return p < 1 ? 1 : p; },
+  };
 
   // ---- 색 테이블 (MochiFaceView.mc 와 동일) ----
   const SKY = [
@@ -117,97 +172,146 @@
   const DIG_BG = [0x2A1B2E, 0x0E2238, 0x26142F, 0x05060D, 0x000000];
   const DIG_HILL = [0x3A2640, 0x16324F, 0x351C40, 0x0C0F1E, 0x111111];
   const DIG_ACCENT = [0xFF9BB3, 0x4FC3F7, 0xFF8A50, 0xB39DDB, 0xFFD23F];
+  const ACCENTS = [0, 0xFF9BB3, 0x4FC3F7, 0xFF8A50, 0x64E3B4, 0xB39DDB, 0xFFD23F];
   const STARS = [70, 110, 110, 70, 150, 150, 230, 60, 300, 110, 50, 190, 320, 190, 200, 20, 260, 140, 95, 160, 140, 40, 285, 60];
   const DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
   const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
   const DAYS_MED = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const MONTHS_MED = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const SLEEP_HOURS = [21, 22, 23, 0, 1], WAKE_HOURS = [5, 6, 7, 8, 9];
   const FRAME_OPEN = 0, FRAME_BLINK = 1, FRAME_YAWN = 2, FRAME_SLEEP = 3, SCENE_SIMPLE = -1;
+  const CHARACTER_COUNT = 4;
 
   const RING = [];
   for (let i = 0; i < 60; i++) {
     const a = i * Math.PI / 30;
-    RING.push([Math.trunc(Math.trunc(180 + 171 * Math.sin(a)) / 2) * 2, Math.trunc(Math.trunc(180 - 171 * Math.cos(a)) / 2) * 2]);
+    RING.push([T(T(180 + 171 * Math.sin(a)) / 2) * 2, T(T(180 - 171 * Math.cos(a)) / 2) * 2]);
   }
-
   const periodFor = h => (h >= 5 && h < 10) ? 0 : (h >= 10 && h < 17) ? 1 : (h >= 17 && h < 20) ? 2 : 3;
-  const isSleepHour = h => h >= 23 || h < 6;
   const fmt2 = n => String(n).padStart(2, '0');
 
   function render(ctx, st) {
     const dc = new Dc(ctx, 360, 360);
     const W = 360, H = 360;
     const displayHour = h => st.is24 ? h : (h % 12 === 0 ? 12 : h % 12);
-    const ci = st.character < 3 ? st.character : st.day % 3;
+    const ci = st.character < CHARACTER_COUNT ? st.character : st.day % CHARACTER_COUNT;
+    const smooth = st.charStyle === 0 ? st.style === 1 : st.charStyle === 2;
+    const korean = st.dateLang === 0 ? st.watchKorean : st.dateLang === 2;
+    const sleepH = SLEEP_HOURS[st.sleepAt], wakeH = WAKE_HOURS[st.wakeAt];
+    const isSleepHour = h => sleepH > wakeH ? (h >= sleepH || h < wakeH) : (h >= sleepH && h < wakeH);
+    const accentColor = fb => st.accent === 0 ? fb : ACCENTS[st.accent];
+    const stepsText = () => st.steps >= 100000 ? T(st.steps / 1000) + 'K' : String(st.steps);
+    const numText = v => v == null ? '--' : String(v);
+
+    function drawChar(ci, frame, cx, baseline, s, bob, flicker, override) {
+      if (smooth) {
+        const size = s * 22, x = cx - T(size / 2), y = baseline - size;
+        Smooth.drawCharacter(dc, ci, frame, x, y + bob, size, flicker, override);
+        const hd = S.smooth[ci].head;
+        return [x + T(hd[1] * size / 100), y + T(hd[0] * size / 100)];
+      }
+      const ch = S.chars[ci], w = ch.w * s, h = ch.h * s, px = cx - T(w / 2), py = baseline - h;
+      Pix.drawCharacter(dc, ci, frame, px, py + bob, s, flicker, override);
+      return [px + ch.head[1] * s, py + ch.head[0] * s];
+    }
+    function charScale(ci, sizes, maxH) {
+      let s = sizes[st.charSize];
+      const h = smooth ? 22 : S.chars[ci].h;
+      while (s > 2 && h * s > maxH) s--;
+      return s;
+    }
+    function slotInfo(slot) {
+      switch (st.slots[slot]) {
+        case 1: return [ICON.HEART, 0xFF4D6D, numText(st.hr)];
+        case 2: return [ICON.BOLT, 0x4FC3F7, numText(st.bb)];
+        case 3: return [ICON.STEPS, 0xFFC94D, stepsText()];
+        case 4: return [ICON.BATT, st.bat <= 20 ? 0xFF5252 : 0x7CFC8A, st.bat + '%'];
+        case 5: return [ICON.FLAME, 0xFF8A50, String(st.cal)];
+        case 6: return [ICON.PIN, 0x9CCC65, st.dist.toFixed(1)];
+        case 7: return [ICON.STAIRS, 0xBA68C8, numText(st.floors)];
+        case 8: return [ICON.WAVE, 0xFFB74D, numText(st.stress)];
+      }
+      return null;
+    }
+    function ringInfo(accent) {
+      switch (st.ring) {
+        case 0: { const f = st.goal > 0 ? st.steps / st.goal : 0; return [f > 1 ? 1 : f, st.steps >= st.goal ? 0x7CFC8A : accent]; }
+        case 1: return [st.bat / 100, st.bat <= 20 ? 0xFF5252 : 0x7CFC8A];
+        case 2: return [st.bb == null ? 0 : st.bb / 100, 0x4FC3F7];
+        case 3: return [st.sec / 60, accent];
+      }
+      return null;
+    }
+    function drawZzz(hx, hy, sec, anim, color, big) {
+      const phase = anim ? sec % 4 : 3;
+      const sizes = big ? [2, 3, 4] : [2, 2, 3], dx = big ? [4, 16, 32] : [2, 12, 24], dy = big ? [-14, -32, -56] : [-8, -22, -38];
+      for (let i = 0; i < 3; i++) if (i < phase) {
+        if (big) Pix.drawTextShadow(dc, 'Z', hx + dx[i], hy + dy[i], sizes[i], color, 0x2B2B3A);
+        else { dc.setColor(color, TRANSPARENT); Pix.drawText(dc, 'Z', hx + dx[i], hy + dy[i], sizes[i]); }
+      }
+    }
 
     if (st.aod) return drawAod();
 
     const scene = st.background === 0 ? periodFor(st.hour) : st.background === 5 ? SCENE_SIMPLE : st.background - 1;
-    const anim = st.animate;
-    const sec = st.sec;
+    const anim = st.animate, sec = st.sec;
     let frame = FRAME_OPEN, bob = 0;
     if (isSleepHour(st.hour)) { frame = FRAME_SLEEP; if (anim && sec % 4 < 2) bob = 2; }
     else if (anim) {
-      if (st.hour >= 6 && st.hour < 10 && sec % 15 >= 7 && sec % 15 <= 8) frame = FRAME_YAWN;
+      if (st.hour >= wakeH && st.hour < wakeH + 3 && sec % 15 >= 7 && sec % 15 <= 8) frame = FRAME_YAWN;
       else if (sec % 5 === 4) frame = FRAME_BLINK;
       if (sec % 2 === 1) bob = -3;
     }
     const flicker = anim && sec % 2 === 1;
-    const stepsText = () => st.steps >= 100000 ? Math.trunc(st.steps / 1000) + 'K' : String(st.steps);
-
     if (st.style === 0) pixelFace(); else digitalFace();
     return;
 
     function pixelFace() {
+      const accent = accentColor(0xFFD23F), shadow = 0x2B2B3A;
       drawScene();
-      // 걸음 링
-      let lit = st.goal > 0 ? Math.trunc(st.steps * 60 / st.goal) : 0; if (lit > 60) lit = 60;
-      const done = st.steps >= st.goal;
-      for (let i = 0; i < 60; i++) {
-        if (i < lit) { dc.setColor(done ? 0x7CFC8A : 0xFFD23F, TRANSPARENT); dc.fillRectangle(RING[i][0] - 3, RING[i][1] - 3, 6, 6); }
-        else { dc.setColor(0xFFFFFF, TRANSPARENT); dc.fillRectangle(RING[i][0] - 1, RING[i][1] - 1, 2, 2); }
+      const ring = ringInfo(accent);
+      if (ring) {
+        let lit = T(ring[0] * 60); if (lit > 60) lit = 60;
+        for (let i = 0; i < 60; i++) {
+          if (i < lit) { dc.setColor(ring[1], TRANSPARENT); dc.fillRectangle(RING[i][0] - 3, RING[i][1] - 3, 6, 6); }
+          else { dc.setColor(0xFFFFFF, TRANSPARENT); dc.fillRectangle(RING[i][0] - 1, RING[i][1] - 1, 2, 2); }
+        }
       }
-      const shadow = 0x2B2B3A;
-      Pix.drawTextShadow(dc, DAYS[st.dow] + ' ' + st.date + ' ' + MONTHS[st.month], 180, 34, 3, 0xFFFFFF, shadow);
-      const h = displayHour(st.hour);
-      const colon = !anim || sec % 2 === 0;
-      dc.setColor(shadow, TRANSPARENT); Pix.drawTime(dc, h, st.min, 184, 64, 7, colon, st.is24);
-      dc.setColor(0xFFFFFF, TRANSPARENT); Pix.drawTime(dc, h, st.min, 180, 60, 7, colon, st.is24);
-      if (!st.is24) Pix.drawTextShadow(dc, st.hour < 12 ? 'AM' : 'PM', 290, 64, 2, 0xFFFFFF, shadow);
+      if (st.showDate) {
+        if (korean) Pix.drawKoDate(dc, st.month + 1, st.date, st.dow, 180, 30, 3, 2, 0xFFFFFF, shadow);
+        else Pix.drawTextShadow(dc, DAYS[st.dow] + ' ' + st.date + ' ' + MONTHS[st.month], 180, 34, 3, 0xFFFFFF, shadow);
+      }
+      const h = displayHour(st.hour), colon = !anim || sec % 2 === 0, timeY = st.showDate ? 60 : 50;
+      dc.setColor(shadow, TRANSPARENT); Pix.drawTime(dc, h, st.min, 184, timeY + 4, 7, colon, st.is24);
+      dc.setColor(st.timeColor === 1 ? accent : 0xFFFFFF, TRANSPARENT); Pix.drawTime(dc, h, st.min, 180, timeY, 7, colon, st.is24);
+      if (!st.is24) Pix.drawTextShadow(dc, st.hour < 12 ? 'AM' : 'PM', 290, timeY + 4, 2, 0xFFFFFF, shadow);
 
-      const s = 5, ch = S.chars[ci];
-      const cw = ch.w * s, chh = ch.h * s;
-      const cx = 180 - Math.trunc(cw / 2), cy = 256 - chh;
+      const s = charScale(ci, [4, 5, 6], 136);
       dc.setColor(scene === SCENE_SIMPLE ? 0x222222 : GRASS[scene][3], TRANSPARENT);
       dc.fillRectangle(136, 252, 88, 5); dc.fillRectangle(148, 257, 64, 4);
-      Pix.drawCharacter(dc, ci, frame, cx, cy + bob, s, flicker, -1);
-      if (frame === FRAME_SLEEP) {
-        const hx = cx + ch.head[1] * s, hy = cy + ch.head[0] * s;
-        const phase = anim ? sec % 4 : 3;
-        const sizes = [2, 3, 4], dx = [4, 16, 32], dy = [-14, -32, -56];
-        for (let i = 0; i < 3; i++) if (i < phase) Pix.drawTextShadow(dc, 'Z', hx + dx[i], hy + dy[i], sizes[i], 0xFFFFFF, 0x2B2B3A);
-      }
-      // 패널
+      const head = drawChar(ci, frame, 180, 256, s, bob, flicker, -1);
+      if (frame === FRAME_SLEEP) drawZzz(head[0], head[1], sec, anim, 0xFFFFFF, true);
+
       const x0 = 100, y0 = 270, pw = 160, ph = 52;
       dc.setColor(0x8B5E3C, TRANSPARENT); dc.fillRectangle(x0 + 4, y0, pw - 8, ph); dc.fillRectangle(x0, y0 + 4, pw, ph - 8);
       dc.setColor(0x3B2A20, TRANSPARENT); dc.fillRectangle(x0 + 4, y0 + 4, pw - 8, ph - 8);
-      const text = 0xFFF3D6, lx = x0 + 12, rx = x0 + 88, r1 = y0 + 12, r2 = y0 + 30;
-      const cell = (color, icon, x, y, str) => { dc.setColor(color, TRANSPARENT); Pix.drawIcon(dc, icon, x, y, 2); dc.setColor(text, TRANSPARENT); Pix.drawText(dc, str, x + 14, y, 2); };
-      cell(0xFF4D6D, ICON_HEART, lx, r1, st.hr == null ? '--' : String(st.hr));
-      cell(st.bat <= 20 ? 0xFF5252 : 0x7CFC8A, ICON_BATT, rx, r1, st.bat + '%');
-      cell(0x4FC3F7, ICON_BOLT, lx, r2, st.bb == null ? '--' : String(st.bb));
-      cell(0xFFC94D, ICON_STEPS, rx, r2, stepsText());
+      const xs = [x0 + 12, x0 + 88, x0 + 12, x0 + 88], ys = [y0 + 12, y0 + 12, y0 + 30, y0 + 30];
+      for (let i = 0; i < 4; i++) {
+        const info = slotInfo(i); if (!info) continue;
+        dc.setColor(info[1], TRANSPARENT); Pix.drawIcon(dc, info[0], xs[i], ys[i], 2);
+        dc.setColor(0xFFF3D6, TRANSPARENT); Pix.drawText(dc, info[2], xs[i] + 14, ys[i], 2);
+      }
     }
 
     function drawScene() {
       if (scene === SCENE_SIMPLE) { dc.setColor(0, 0); dc.clear(); return; }
       const sky = SKY[scene], grass = GRASS[scene], groundY = 246;
       for (let i = 0; i < 6; i++) {
-        const y0 = Math.trunc(groundY * i / 6), y1 = Math.trunc(groundY * (i + 1) / 6);
+        const y0 = T(groundY * i / 6), y1 = T(groundY * (i + 1) / 6);
         dc.setColor(sky[i], TRANSPARENT); dc.fillRectangle(0, y0, W, y1 - y0);
       }
       for (let i = 1; i < 6; i++) {
-        const yb = Math.trunc(groundY * i / 6); dc.setColor(sky[i], TRANSPARENT);
+        const yb = T(groundY * i / 6); dc.setColor(sky[i], TRANSPARENT);
         for (let x = (i % 2) * 4; x < W; x += 8) dc.fillRectangle(x, yb - 4, 4, 4);
       }
       dc.setColor(SUN[scene], TRANSPARENT);
@@ -244,58 +348,59 @@
     function cloud(x, y) { dc.fillRectangle(x + 12, y, 20, 8); dc.fillRectangle(x + 4, y + 8, 44, 8); dc.fillRectangle(x, y + 16, 56, 8); }
 
     function digitalFace() {
-      const cx = 180, ti = scene === SCENE_SIMPLE ? 4 : scene, accent = DIG_ACCENT[ti];
+      const cx = 180, ti = scene === SCENE_SIMPLE ? 4 : scene, accent = accentColor(DIG_ACCENT[ti]);
       dc.setColor(DIG_BG[ti], DIG_BG[ti]); dc.clear();
       dc.setColor(DIG_HILL[ti], TRANSPARENT); dc.fillCircle(cx, 440, 200);
       const r = 170;
-      dc.setPenWidth(8); dc.setColor(0x333842, TRANSPARENT);
-      dc.drawArc(cx, 180, r, 'ccw', 300, 60); dc.drawArc(cx, 180, r, 'cw', 240, 120);
-      let fs = st.goal > 0 ? st.steps / st.goal : 0; if (fs > 1) fs = 1;
-      if (fs > 0.01) { dc.setColor(st.steps >= st.goal ? 0x7CFC8A : accent, TRANSPARENT); dc.drawArc(cx, 180, r, 'ccw', 300, (300 + Math.trunc(120 * fs)) % 360); }
+      dc.setPenWidth(8); dc.setColor(0x333842, TRANSPARENT); dc.drawArc(cx, 180, r, 'cw', 240, 120);
+      const ring = ringInfo(accent);
+      if (ring) {
+        dc.setColor(0x333842, TRANSPARENT); dc.drawArc(cx, 180, r, 'ccw', 300, 60);
+        if (ring[0] > 0.01) { dc.setColor(ring[1], TRANSPARENT); dc.drawArc(cx, 180, r, 'ccw', 300, (300 + T(120 * ring[0])) % 360); }
+      }
       const fb = st.bat / 100;
-      if (fb > 0.01) { dc.setColor(st.bat <= 20 ? 0xFF5252 : 0x7CFC8A, TRANSPARENT); dc.drawArc(cx, 180, r, 'cw', 240, 240 - Math.trunc(120 * fb)); }
+      if (fb > 0.01) { dc.setColor(st.bat <= 20 ? 0xFF5252 : 0x7CFC8A, TRANSPARENT); dc.drawArc(cx, 180, r, 'cw', 240, 240 - T(120 * fb)); }
       dc.setPenWidth(1);
-      dc.setColor(0xBBBBBB, TRANSPARENT); dc.drawText(cx, 56, 'TINY', DAYS_MED[st.dow] + ' ' + st.date + ' ' + MONTHS_MED[st.month]);
-      const h = displayHour(st.hour);
-      dc.setColor(0xFFFFFF, TRANSPARENT); dc.drawText(cx, 122, 'NUMBER_HOT', (st.is24 ? fmt2(h) : String(h)) + ':' + fmt2(st.min));
-      if (!st.is24) { dc.setColor(accent, TRANSPARENT); dc.drawText(cx + 124, 96, 'XTINY', st.hour < 12 ? 'AM' : 'PM'); }
+      if (st.showDate) {
+        if (korean) Pix.drawKoDate(dc, st.month + 1, st.date, st.dow, cx, 45, 2, 2, 0xBBBBBB, -1);
+        else { dc.setColor(0xBBBBBB, TRANSPARENT); dc.drawText(cx, 56, 'TINY', DAYS_MED[st.dow] + ' ' + st.date + ' ' + MONTHS_MED[st.month]); }
+      }
+      const h = displayHour(st.hour), timeY = st.showDate ? 118 : 108;
+      dc.setColor(st.timeColor === 1 ? accent : 0xFFFFFF, TRANSPARENT);
+      dc.drawText(cx, timeY, 'NUMBER_HOT', (st.is24 ? fmt2(h) : String(h)) + ':' + fmt2(st.min));
+      if (!st.is24) { dc.setColor(accent, TRANSPARENT); dc.drawText(cx + 124, timeY - 26, 'XTINY', st.hour < 12 ? 'AM' : 'PM'); }
 
-      const s = 4, ch = S.chars[ci], cw = ch.w * s, chh = ch.h * s;
-      const px = cx - Math.trunc(cw / 2), py = 252 - chh;
-      Pix.drawCharacter(dc, ci, frame, px, py + bob, s, flicker, -1);
-      if (frame === FRAME_SLEEP) {
-        const phase = anim ? sec % 4 : 3, hx = px + ch.head[1] * s, hy = py + ch.head[0] * s;
-        dc.setColor(accent, TRANSPARENT);
-        if (phase > 0) Pix.drawText(dc, 'Z', hx + 2, hy - 8, 2);
-        if (phase > 1) Pix.drawText(dc, 'Z', hx + 12, hy - 22, 2);
-        if (phase > 2) Pix.drawText(dc, 'Z', hx + 24, hy - 38, 3);
-      }
-      const cols = [cx - 70, cx, cx + 70], icons = [ICON_HEART, ICON_BOLT, ICON_STEPS];
-      const colors = [0xFF4D6D, 0x4FC3F7, accent];
-      const vals = [st.hr == null ? '--' : String(st.hr), st.bb == null ? '--' : String(st.bb), stepsText()];
+      const s = charScale(ci, [3, 4, 5], 100);
+      const head = drawChar(ci, frame, cx, 256, s, bob, flicker, -1);
+      if (frame === FRAME_SLEEP) drawZzz(head[0], head[1], sec, anim, accent, false);
+
+      const cols = [cx - 70, cx, cx + 70];
       for (let i = 0; i < 3; i++) {
-        dc.setColor(colors[i], TRANSPARENT); Pix.drawIcon(dc, icons[i], cols[i] - 5, 262, 2);
-        dc.setColor(0xFFFFFF, TRANSPARENT); dc.drawText(cols[i], 292, 'TINY', vals[i]);
+        const info = slotInfo(i); if (!info) continue;
+        dc.setColor(info[1], TRANSPARENT); Pix.drawIcon(dc, info[0], cols[i] - 5, 264, 2);
+        dc.setColor(0xFFFFFF, TRANSPARENT); dc.drawText(cols[i], 293, 'TINY', info[2]);
       }
-      dc.setColor(0x999999, TRANSPARENT); dc.drawText(cx, 326, 'XTINY', st.bat + '%');
+      const i4 = slotInfo(3);
+      if (i4) {
+        dc.setColor(i4[1], TRANSPARENT); Pix.drawIcon(dc, i4[0], cx - 30, 321, 2);
+        dc.setColor(0xBBBBBB, TRANSPARENT); dc.drawText(cx + 6, 326, 'XTINY', i4[2]);
+      }
     }
 
     function drawAod() {
       dc.setColor(0, 0); dc.clear();
-      const m = st.min, dx = (m % 5 - 2) * 4, dy = (Math.trunc(m / 5) % 5 - 2) * 4;
+      const m = st.min, dx = (m % 5 - 2) * 4, dy = (T(m / 5) % 5 - 2) * 4;
       const cx = 180 + dx, oy = dy, h = displayHour(st.hour);
-      if (st.style === 0) {
-        const date = DAYS[st.dow] + ' ' + st.date;
-        dc.setColor(0x777777, TRANSPARENT); Pix.drawText(dc, date, cx - Math.trunc(Pix.textWidth(date, 2) / 2), 78 + oy, 2);
-        dc.setColor(0xAAAAAA, TRANSPARENT); Pix.drawTime(dc, h, m, cx, 100 + oy, 5, true, st.is24);
-      } else {
-        dc.setColor(0xAAAAAA, TRANSPARENT); dc.drawText(cx, 120 + oy, 'NUMBER_MEDIUM', (st.is24 ? fmt2(h) : String(h)) + ':' + fmt2(m));
+      if (st.showDate) {
+        if (korean) Pix.drawKoDate(dc, 0, st.date, st.dow, cx, 70 + oy, 2, 2, 0x777777, -1);
+        else { const date = DAYS[st.dow] + ' ' + st.date; dc.setColor(0x777777, TRANSPARENT); Pix.drawText(dc, date, cx - T(Pix.textWidth(date, 2) / 2), 78 + oy, 2); }
       }
-      const s = 3, ch = S.chars[ci];
-      Pix.drawCharacter(dc, ci, FRAME_SLEEP, cx - Math.trunc(ch.w * s / 2), 256 + oy - ch.h * s, s, false, 0x5A5A5A);
+      if (st.style === 0) { dc.setColor(0xAAAAAA, TRANSPARENT); Pix.drawTime(dc, h, m, cx, 100 + oy, 5, true, st.is24); }
+      else { dc.setColor(0xAAAAAA, TRANSPARENT); dc.drawText(cx, 124 + oy, 'NUMBER_MEDIUM', (st.is24 ? fmt2(h) : String(h)) + ':' + fmt2(m)); }
+      drawChar(ci, FRAME_SLEEP, cx, 256 + oy, 3, 0, false, 0x5A5A5A);
       const a = m * Math.PI / 30;
       dc.setColor(0x888888, TRANSPARENT);
-      dc.fillRectangle(Math.trunc(180 + 158 * Math.sin(a)) - 2, Math.trunc(180 - 158 * Math.cos(a)) - 2, 4, 4);
+      dc.fillRectangle(T(180 + 158 * Math.sin(a)) - 2, T(180 - 158 * Math.cos(a)) - 2, 4, 4);
     }
   }
 

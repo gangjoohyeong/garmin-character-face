@@ -31,42 +31,50 @@
     font-family: "Noto Sans KR", system-ui, sans-serif; font-size: 15px; line-height: 1.55;
     padding: 28px 20px 48px; margin: 0;
   }
-  .wrap { max-width: 1040px; margin: 0 auto; display: grid; gap: 28px; }
+  .wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 28px; }
   header h1 { font-family: "Silkscreen", monospace; font-weight: 400; font-size: 30px; margin: 0; letter-spacing: .02em; }
-  header p { margin: 4px 0 0; color: var(--muted); max-width: 62ch; }
-  .main { display: grid; grid-template-columns: minmax(0, 440px) minmax(0, 1fr); gap: 28px; align-items: start; }
+  header p { margin: 4px 0 0; color: var(--muted); max-width: 64ch; }
+  .main { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 28px; align-items: start; }
   .stage { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); display: grid; justify-items: center; gap: 12px; }
   .watch {
-    width: min(100%, 420px); aspect-ratio: 1; border-radius: 50%; padding: 18px;
+    width: min(100%, 400px); aspect-ratio: 1; border-radius: 50%; padding: 18px;
     background: radial-gradient(circle at 30% 25%, #55606F, var(--bezel) 60%);
     box-shadow: 0 18px 40px rgba(10, 16, 28, .28), inset 0 0 0 3px rgba(255,255,255,.08);
   }
-  .watch canvas { width: 100%; height: 100%; border-radius: 50%; display: block; background: #000; image-rendering: pixelated; }
+  .watch canvas { width: 100%; height: 100%; border-radius: 50%; display: block; background: #000; }
   .readout { font-family: "Silkscreen", monospace; font-size: 13px; color: var(--muted); text-align: center; }
-  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: grid; gap: 20px; }
-  fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 8px; }
-  legend { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 0; margin-bottom: 8px; }
+  .panel { display: grid; gap: 16px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; gap: 16px; }
+  .card h2 { margin: 0; font-size: 15px; font-weight: 700; }
+  .field { display: grid; gap: 6px; }
+  .label { font-size: 12px; font-weight: 700; letter-spacing: .06em; color: var(--muted); }
   .seg { display: flex; flex-wrap: wrap; gap: 6px; }
   .seg button {
     font: inherit; font-size: 14px; border: 1px solid var(--line); background: var(--chip); color: var(--ink);
-    padding: 6px 12px; border-radius: 8px; cursor: pointer;
+    padding: 5px 11px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
   }
   .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
-  button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .toggles { display: flex; flex-wrap: wrap; gap: 16px; }
+  .swatch { width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgba(0,0,0,.2); }
+  button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .slots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  select {
+    font: inherit; font-size: 14px; width: 100%; padding: 6px 8px; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--chip); color: var(--ink);
+  }
+  .toggles { display: flex; flex-wrap: wrap; gap: 8px 16px; }
   .toggles label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
-  .sliders { display: grid; gap: 10px; }
+  .sliders { display: grid; gap: 8px; }
   .row { display: grid; grid-template-columns: 7.5em minmax(0, 1fr) 4.5em; gap: 10px; align-items: center; }
   .row output { font-variant-numeric: tabular-nums; text-align: right; font-weight: 500; }
   input[type=range] { width: 100%; accent-color: var(--accent); }
+  .note { font-size: 13px; color: var(--muted); margin: 0; }
   .gallery h2 { font-family: "Silkscreen", monospace; font-weight: 400; font-size: 18px; margin: 0 0 4px; }
   .gallery p { margin: 0 0 14px; color: var(--muted); }
-  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+  .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
   .cell { display: grid; justify-items: center; gap: 6px; cursor: pointer; background: none; border: 0; color: inherit; font: inherit; padding: 0; }
-  .cell canvas { width: 100%; max-width: 200px; aspect-ratio: 1; border-radius: 50%; border: 8px solid var(--bezel); background: #000; image-rendering: pixelated; }
+  .cell canvas { width: 100%; max-width: 200px; aspect-ratio: 1; border-radius: 50%; border: 8px solid var(--bezel); background: #000; }
   .cell span { font-size: 13px; color: var(--muted); }
-  .note { font-size: 13px; color: var(--muted); }
-  @media (max-width: 760px) {
+  @media (max-width: 800px) {
     .main { grid-template-columns: minmax(0, 1fr); }
     .stage { position: static; }
     .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -76,7 +84,7 @@
 <div class="wrap">
   <header>
     <h1>Pixel Pals</h1>
-    <p>Forerunner 265S 워치페이스 미리보기. 워치 코드와 같은 스프라이트 데이터로 그리므로 실제 화면과 같은 배치입니다. 디지털 스타일의 숫자 글꼴만 워치 시스템 폰트와 조금 다릅니다.</p>
+    <p>Forerunner 265S 워치페이스 미리보기. 워치 코드와 같은 그림 데이터로 그리므로 실제 화면과 같은 배치입니다. 디지털 스타일의 숫자 글꼴만 워치 시스템 폰트와 조금 다릅니다.</p>
   </header>
 
   <div class="main">
@@ -86,52 +94,43 @@
     </div>
 
     <div class="panel">
-      <fieldset><legend>스타일</legend>
-        <div class="seg" id="style" data-key="style">
-          <button data-v="0">픽셀아트</button><button data-v="1">디지털</button>
+      <section class="card" id="cardLook"><h2>모양</h2></section>
+      <section class="card" id="cardInfo"><h2>정보</h2>
+        <div class="field"><span class="label">정보 칸</span><div class="slots" id="slots"></div>
+          <p class="note">픽셀아트는 나무판에 1~4를 2줄로, 디지털은 1~3을 가로로 놓고 4를 맨 아래에 작게 표시합니다.</p>
         </div>
-      </fieldset>
-      <fieldset><legend>캐릭터</legend>
-        <div class="seg" id="character" data-key="character">
-          <button data-v="0">모찌</button><button data-v="1">꼬부기</button><button data-v="2">파이리</button><button data-v="3">매일 랜덤</button>
-        </div>
-      </fieldset>
-      <fieldset><legend>배경</legend>
-        <div class="seg" id="background" data-key="background">
-          <button data-v="0">자동(시간대)</button><button data-v="1">아침</button><button data-v="2">낮</button>
-          <button data-v="3">저녁</button><button data-v="4">밤</button><button data-v="5">심플</button>
-        </div>
-      </fieldset>
-      <fieldset><legend>화면 상태</legend>
+      </section>
+      <section class="card" id="cardMotion"><h2>동작</h2></section>
+      <section class="card"><h2>미리보기 상태</h2>
         <div class="toggles">
-          <label><input type="checkbox" id="animate" checked> 애니메이션</label>
           <label><input type="checkbox" id="aod"> AOD (항상 켜짐)</label>
           <label><input type="checkbox" id="is24" checked> 24시간제</label>
+          <label><input type="checkbox" id="watchKorean" checked> 워치 언어 한국어</label>
           <label><input type="checkbox" id="live" checked> 현재 시각</label>
         </div>
-      </fieldset>
-      <fieldset><legend>시각</legend>
         <div class="seg" id="presets">
           <button data-t="450">아침 7:30</button><button data-t="780">낮 13:00</button>
           <button data-t="1110">저녁 18:30</button><button data-t="1420">밤 23:40</button>
         </div>
-        <div class="row"><span>시각</span><input type="range" id="time" min="0" max="1439" value="780"><output id="timeOut"></output></div>
-      </fieldset>
-      <fieldset><legend>센서 값 (예시)</legend>
         <div class="sliders">
+          <div class="row"><span>시각</span><input type="range" id="time" min="0" max="1439" value="780"><output id="timeOut"></output></div>
           <div class="row"><span>심박</span><input type="range" id="hr" min="40" max="190" value="68"><output id="hrOut"></output></div>
           <div class="row"><span>배터리</span><input type="range" id="bat" min="0" max="100" value="82"><output id="batOut"></output></div>
           <div class="row"><span>Body Battery</span><input type="range" id="bb" min="0" max="100" value="64"><output id="bbOut"></output></div>
           <div class="row"><span>걸음</span><input type="range" id="steps" min="0" max="15000" step="50" value="6420"><output id="stepsOut"></output></div>
+          <div class="row"><span>칼로리</span><input type="range" id="cal" min="0" max="4000" step="10" value="1480"><output id="calOut"></output></div>
+          <div class="row"><span>거리 (km)</span><input type="range" id="dist" min="0" max="300" value="48"><output id="distOut"></output></div>
+          <div class="row"><span>오른 층수</span><input type="range" id="floors" min="0" max="60" value="7"><output id="floorsOut"></output></div>
+          <div class="row"><span>스트레스</span><input type="range" id="stress" min="0" max="100" value="27"><output id="stressOut"></output></div>
         </div>
-        <p class="note">걸음 목표는 10,000보로 가정합니다. 목표를 넘으면 링과 아크가 초록색으로 바뀝니다.</p>
-      </fieldset>
+        <p class="note">센서 값은 예시입니다. 걸음 목표는 10,000보로 가정합니다.</p>
+      </section>
     </div>
   </div>
 
   <section class="gallery">
-    <h2>All combos</h2>
-    <p>스타일 2종 × 캐릭터 3종. 누르면 위 미리보기에 적용됩니다.</p>
+    <h2>All pals</h2>
+    <p>워치페이스 스타일 2종 × 캐릭터 4종. 누르면 위 미리보기에 적용됩니다. 나머지 설정은 위에서 고른 값을 따릅니다.</p>
     <div class="grid" id="grid"></div>
   </section>
 </div>
@@ -141,9 +140,72 @@
 <script>
 (function () {
   const $ = id => document.getElementById(id);
-  const state = { style: 0, character: 0, background: 0 };
-  const NAMES = ['모찌', '꼬부기', '파이리'];
+  const DATA = ['없음', '심박', 'Body Battery', '걸음', '배터리', '칼로리', '거리', '오른 층수', '스트레스'];
+  const NAMES = ['모찌', '꼬부기', '파이리', '도롱이'];
   const STYLE_NAMES = ['픽셀아트', '디지털'];
+  const ACCENT_HEX = [null, '#FF9BB3', '#4FC3F7', '#FF8A50', '#64E3B4', '#B39DDB', '#FFD23F'];
+
+  // 워치 설정과 같은 항목 (resources/settings/settings.xml)
+  const OPTIONS = [
+    { card: 'cardLook', key: 'style', label: '워치페이스 스타일', items: STYLE_NAMES },
+    { card: 'cardLook', key: 'character', label: '캐릭터', items: [...NAMES, '매일 랜덤'] },
+    { card: 'cardLook', key: 'charStyle', label: '캐릭터 스타일', items: ['워치페이스 따라감', '픽셀아트', '디지털'] },
+    { card: 'cardLook', key: 'charSize', label: '캐릭터 크기', items: ['작게', '보통', '크게'], def: 1 },
+    { card: 'cardLook', key: 'background', label: '배경', items: ['자동(시간대)', '아침', '낮', '저녁', '밤', '심플(검정)'] },
+    { card: 'cardLook', key: 'accent', label: '강조색', items: ['자동', '핑크', '하늘', '주황', '민트', '보라', '노랑'], swatch: ACCENT_HEX },
+    { card: 'cardLook', key: 'timeColor', label: '시각 색상', items: ['흰색', '강조색'] },
+    { card: 'cardInfo', key: 'ring', label: '바깥 링', items: ['걸음', '배터리', 'Body Battery', '초', '끄기'] },
+    { card: 'cardInfo', key: 'dateLang', label: '날짜 언어', items: ['워치 언어 따라감', 'English', '한국어'] },
+    { card: 'cardMotion', key: 'sleepAt', label: '캐릭터 취침 시각', items: ['21:00', '22:00', '23:00', '0:00', '1:00'], def: 2 },
+    { card: 'cardMotion', key: 'wakeAt', label: '캐릭터 기상 시각', items: ['5:00', '6:00', '7:00', '8:00', '9:00'], def: 1 },
+  ];
+  const state = { slots: [1, 4, 2, 3], showDate: true, animate: true };
+  OPTIONS.forEach(o => { state[o.key] = o.def || 0; });
+
+  function buildSeg(o) {
+    const field = document.createElement('div'); field.className = 'field';
+    const lab = document.createElement('span'); lab.className = 'label'; lab.textContent = o.label;
+    const seg = document.createElement('div'); seg.className = 'seg'; seg.dataset.key = o.key;
+    o.items.forEach((t, v) => {
+      const b = document.createElement('button'); b.type = 'button'; b.dataset.v = v;
+      if (o.swatch && o.swatch[v]) { const sw = document.createElement('span'); sw.className = 'swatch'; sw.style.background = o.swatch[v]; b.appendChild(sw); }
+      b.appendChild(document.createTextNode(t));
+      seg.appendChild(b);
+    });
+    seg.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; state[o.key] = +b.dataset.v; sync(); draw(); });
+    field.append(lab, seg);
+    $(o.card).appendChild(field);
+  }
+  OPTIONS.forEach(buildSeg);
+
+  // 토글 (날짜 표시 / 애니메이션)
+  function addToggle(card, id, text, key) {
+    const wrap = document.createElement('div'); wrap.className = 'toggles';
+    const l = document.createElement('label');
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = id; cb.checked = state[key];
+    cb.addEventListener('input', () => { state[key] = cb.checked; draw(); });
+    l.append(cb, document.createTextNode(' ' + text)); wrap.appendChild(l);
+    $(card).insertBefore(wrap, $(card).children[1]);
+  }
+  addToggle('cardInfo', 'showDate', '날짜 표시', 'showDate');
+  addToggle('cardMotion', 'animate', '애니메이션', 'animate');
+
+  // 정보 칸 1~4
+  for (let i = 0; i < 4; i++) {
+    const f = document.createElement('label'); f.className = 'field';
+    const lab = document.createElement('span'); lab.className = 'label'; lab.textContent = '칸 ' + (i + 1);
+    const sel = document.createElement('select'); sel.id = 'slot' + (i + 1);
+    DATA.forEach((t, v) => { const op = document.createElement('option'); op.value = v; op.textContent = t; sel.appendChild(op); });
+    sel.value = state.slots[i];
+    sel.addEventListener('input', () => { state.slots[i] = +sel.value; draw(); });
+    f.append(lab, sel); $('slots').appendChild(f);
+  }
+
+  function sync() {
+    document.querySelectorAll('.seg[data-key]').forEach(seg => {
+      seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.v === state[seg.dataset.key])));
+    });
+  }
 
   function setupCanvas(cv) {
     const dpr = Math.max(1, Math.round(window.devicePixelRatio || 1));
@@ -155,37 +217,27 @@
   }
   const mainCtx = setupCanvas($('watch'));
 
-  document.querySelectorAll('.seg[data-key]').forEach(seg => {
-    seg.addEventListener('click', e => {
-      const b = e.target.closest('button'); if (!b) return;
-      state[seg.dataset.key] = +b.dataset.v; syncSeg(); draw();
-    });
-  });
-  function syncSeg() {
-    document.querySelectorAll('.seg[data-key]').forEach(seg => {
-      seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.v === state[seg.dataset.key])));
-    });
-  }
   $('presets').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     $('live').checked = false; $('time').value = b.dataset.t; draw();
   });
-  ['animate', 'aod', 'is24', 'live', 'hr', 'bat', 'bb', 'steps'].forEach(id => $(id).addEventListener('input', draw));
+  ['aod', 'is24', 'watchKorean', 'live', 'hr', 'bat', 'bb', 'steps', 'cal', 'dist', 'floors', 'stress'].forEach(id => $(id).addEventListener('input', draw));
   $('time').addEventListener('input', () => { $('live').checked = false; draw(); });
 
-  function snapshot(overrides) {
+  function snapshot() {
     const now = new Date();
     let hour, min;
     if ($('live').checked) { hour = now.getHours(); min = now.getMinutes(); $('time').value = hour * 60 + min; }
     else { const t = +$('time').value; hour = Math.floor(t / 60); min = t % 60; }
-    return Object.assign({
-      style: state.style, character: state.character, background: state.background,
-      animate: $('animate').checked, aod: $('aod').checked, is24: $('is24').checked,
+    return Object.assign({}, state, {
+      slots: state.slots.slice(),
+      aod: $('aod').checked, is24: $('is24').checked, watchKorean: $('watchKorean').checked,
       hour, min, sec: now.getSeconds(),
       dow: now.getDay(), date: now.getDate(), month: now.getMonth(),
       day: Math.floor(now.getTime() / 86400000),
       hr: +$('hr').value, bat: +$('bat').value, bb: +$('bb').value, steps: +$('steps').value, goal: 10000,
-    }, overrides || {});
+      cal: +$('cal').value, dist: +$('dist').value / 10, floors: +$('floors').value, stress: +$('stress').value,
+    });
   }
 
   function paint(ctx, st) {
@@ -197,13 +249,13 @@
   }
 
   const cells = [];
-  for (let s = 0; s < 2; s++) for (let c = 0; c < 3; c++) {
+  for (let s = 0; s < 2; s++) for (let c = 0; c < NAMES.length; c++) {
     const btn = document.createElement('button');
     btn.className = 'cell'; btn.type = 'button';
     const cv = document.createElement('canvas'); cv.width = 360; cv.height = 360;
     const label = document.createElement('span'); label.textContent = STYLE_NAMES[s] + ' · ' + NAMES[c];
     btn.append(cv, label);
-    btn.addEventListener('click', () => { state.style = s; state.character = c; syncSeg(); draw(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+    btn.addEventListener('click', () => { state.style = s; state.character = c; sync(); draw(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
     $('grid').appendChild(btn);
     cells.push({ ctx: setupCanvas(cv), s, c });
   }
@@ -217,11 +269,16 @@
     $('batOut').textContent = st.bat + '%';
     $('bbOut').textContent = st.bb;
     $('stepsOut').textContent = st.steps.toLocaleString('ko-KR');
-    const who = st.character < 3 ? NAMES[st.character] : NAMES[st.day % 3] + ' (랜덤)';
-    $('readout').textContent = STYLE_NAMES[st.style] + ' · ' + who + (st.aod ? ' · AOD' : '');
+    $('calOut').textContent = st.cal.toLocaleString('ko-KR');
+    $('distOut').textContent = st.dist.toFixed(1);
+    $('floorsOut').textContent = st.floors;
+    $('stressOut').textContent = st.stress;
+    const who = st.character < 4 ? NAMES[st.character] : NAMES[st.day % 4] + ' (랜덤)';
+    const cs = st.charStyle === 0 ? STYLE_NAMES[st.style] : STYLE_NAMES[st.charStyle - 1];
+    $('readout').textContent = STYLE_NAMES[st.style] + ' · ' + who + ' (' + cs + ')' + (st.aod ? ' · AOD' : '');
   }
 
-  syncSeg();
+  sync();
   draw();
   setInterval(draw, 1000);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);

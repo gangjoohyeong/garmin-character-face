@@ -8,6 +8,10 @@ module Pix {
     const ICON_BOLT = 1;
     const ICON_STEPS = 2;
     const ICON_BATT = 3;
+    const ICON_FLAME = 4;
+    const ICON_PIN = 5;
+    const ICON_STAIRS = 6;
+    const ICON_WAVE = 7;
 
     // 런 배열 그리기. override >= 0 이면 외곽선(팔레트 1)만 해당 색으로 그림 (AOD용)
     function drawRuns(dc as Dc, runs as Array, pal as Array, x as Number, y as Number,
@@ -96,16 +100,15 @@ module Pix {
         drawText(dc, t, x, y, s);
     }
 
-    // ---- 5x7 큰 숫자 (HH:MM) ----
-    function drawBigDigit(dc as Dc, d as Number, x as Number, y as Number, s as Number) as Void {
-        var rows = Sprites.BIG[d] as Array;
-        for (var r = 0; r < 7; r++) {
+    // ---- 행 마스크 글리프 (큰 숫자 5x7, 한글 7x10) ----
+    function drawRows(dc as Dc, rows as Array, cols as Number, x as Number, y as Number, s as Number) as Void {
+        for (var r = 0; r < rows.size(); r++) {
             var m = rows[r] as Number;
             var c = 0;
-            while (c < 5) {
+            while (c < cols) {
                 if (((m >> c) & 1) != 0) {
                     var st = c;
-                    while (c < 5 && ((m >> c) & 1) != 0) {
+                    while (c < cols && ((m >> c) & 1) != 0) {
                         c++;
                     }
                     dc.fillRectangle(x + st * s, y + r * s, (c - st) * s, s);
@@ -114,6 +117,54 @@ module Pix {
                 }
             }
         }
+    }
+
+    function drawBigDigit(dc as Dc, d as Number, x as Number, y as Number, s as Number) as Void {
+        drawRows(dc, Sprites.BIG[d] as Array, 5, x, y, s);
+    }
+
+    // ---- 한글 날짜 "9월 27일 토" ----
+    const HAN_DAY = 0;    // 일
+    const HAN_MONTH = 1;  // 월
+
+    function drawHangul(dc as Dc, idx as Number, x as Number, y as Number, s as Number) as Void {
+        drawRows(dc, Sprites.HANGUL[idx] as Array, 7, x, y, s);
+    }
+
+    // 숫자는 3x5 글꼴(sd배), 한글은 7x10(sh배). y = 한글 윗줄, 숫자는 아래 정렬.
+    // month <= 0 이면 월 생략. draw=false 면 폭만 계산.
+    function koDate(dc as Dc, month as Number, day as Number, dow as Number, x as Number, y as Number,
+                    sd as Number, sh as Number, draw as Boolean) as Number {
+        var cx = x;
+        var dy = y + 10 * sh - 5 * sd;
+        var space = sh * 3;
+        if (month > 0) {
+            var m = month.format("%d");
+            if (draw) { drawText(dc, m, cx, dy, sd); }
+            cx += textWidth(m, sd) + sd;
+            if (draw) { drawHangul(dc, HAN_MONTH, cx, y, sh); }
+            cx += 7 * sh + space;
+        }
+        var d = day.format("%d");
+        if (draw) { drawText(dc, d, cx, dy, sd); }
+        cx += textWidth(d, sd) + sd;
+        if (draw) { drawHangul(dc, HAN_DAY, cx, y, sh); }
+        cx += 7 * sh + space;
+        if (draw) { drawHangul(dc, dow, cx, y, sh); }
+        cx += 7 * sh;
+        return cx - x;
+    }
+
+    // 가운데 정렬 (+ shadow >= 0 이면 그림자)
+    function drawKoDate(dc as Dc, month as Number, day as Number, dow as Number, cx as Number, y as Number,
+                        sd as Number, sh as Number, color as Number, shadow as Number) as Void {
+        var x = cx - koDate(dc, month, day, dow, 0, 0, sd, sh, false) / 2;
+        if (shadow >= 0) {
+            dc.setColor(shadow, Graphics.COLOR_TRANSPARENT);
+            koDate(dc, month, day, dow, x + sh, y + sh, sd, sh, true);
+        }
+        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+        koDate(dc, month, day, dow, x, y, sd, sh, true);
     }
 
     // 폭: 5+1+5 +2+1+2 +5+1+5 = 27 단위

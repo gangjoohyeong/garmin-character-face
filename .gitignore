@@ -2,3 +2,4 @@ bin/
 keys/
 *.prg
 *.iq
+__pycache__/

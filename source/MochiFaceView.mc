@@ -35,9 +35,14 @@ class MochiFaceView extends WatchUi.WatchFace {
     // 데이터
     private var _hr as Number or Null = null;
     private var _bb as Number or Null = null;
+    private var _stress as Number or Null = null;
+    private var _floors as Number or Null = null;
     private var _bat as Number = 0;
     private var _steps as Number = 0;
     private var _goal as Number = 10000;
+    private var _cal as Number = 0;
+    private var _dist as Float = 0.0;   // km 또는 mi
+    private var _sec as Number = 0;
 
     // 색 테이블
     private var _sky as Array = [
@@ -59,6 +64,8 @@ class MochiFaceView extends WatchUi.WatchFace {
     private var _digBg as Array<Number> = [0x2A1B2E, 0x0E2238, 0x26142F, 0x05060D, 0x000000] as Array<Number>;
     private var _digHill as Array<Number> = [0x3A2640, 0x16324F, 0x351C40, 0x0C0F1E, 0x111111] as Array<Number>;
     private var _digAccent as Array<Number> = [0xFF9BB3, 0x4FC3F7, 0xFF8A50, 0xB39DDB, 0xFFD23F] as Array<Number>;
+    // 강조색 설정 (0 = 자동)
+    private var _accents as Array<Number> = [0, 0xFF9BB3, 0x4FC3F7, 0xFF8A50, 0x64E3B4, 0xB39DDB, 0xFFD23F] as Array<Number>;
 
     private var _stars as Array<Number> = [
         70, 110, 110, 70, 150, 150, 230, 60, 300, 110, 50, 190,
@@ -68,6 +75,9 @@ class MochiFaceView extends WatchUi.WatchFace {
     private var _days as Array<String> = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"] as Array<String>;
     private var _months as Array<String> = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
                                             "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"] as Array<String>;
+    private var _daysMed as Array<String> = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as Array<String>;
+    private var _monthsMed as Array<String> = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                                               "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as Array<String>;
 
     function initialize() {
         WatchFace.initialize();
@@ -108,6 +118,7 @@ class MochiFaceView extends WatchUi.WatchFace {
             dc.setAntiAlias(false);
         }
         var clock = System.getClockTime();
+        _sec = clock.sec;
         var ci = Settings.currentCharacter();
 
         if (_lowPower && _burnIn) {
@@ -119,18 +130,17 @@ class MochiFaceView extends WatchUi.WatchFace {
         var scene = sceneFor(clock.hour);
         var anim = Settings.animate && !_lowPower;
         var sec = clock.sec;
-        var sleeping = isSleepHour(clock.hour);
 
         // 캐릭터 상태 (시간대 기준)
         var frame = FRAME_OPEN;
         var bob = 0;
-        if (sleeping) {
+        if (isSleepHour(clock.hour)) {
             frame = FRAME_SLEEP;
             if (anim && (sec % 4) < 2) {
                 bob = 2;
             }
         } else if (anim) {
-            if (clock.hour >= 6 && clock.hour < 10 && (sec % 15) >= 7 && (sec % 15) <= 8) {
+            if (isYawnHour(clock.hour) && (sec % 15) >= 7 && (sec % 15) <= 8) {
                 frame = FRAME_YAWN;
             } else if ((sec % 5) == 4) {
                 frame = FRAME_BLINK;
@@ -141,7 +151,7 @@ class MochiFaceView extends WatchUi.WatchFace {
         }
         var flicker = anim && (sec % 2) == 1;
 
-        if (Settings.style == 0) {
+        if (Settings.get(Settings.STYLE) == 0) {
             drawPixelFace(dc, clock, scene, ci, frame, bob, flicker, anim);
         } else {
             drawDigitalFace(dc, clock, scene, ci, frame, bob, flicker, anim);
@@ -161,7 +171,7 @@ class MochiFaceView extends WatchUi.WatchFace {
     }
 
     private function sceneFor(hour as Number) as Number {
-        var bg = Settings.background;
+        var bg = Settings.get(Settings.BACKGROUND);
         if (bg == 0) {
             return periodFor(hour);
         }
@@ -172,7 +182,17 @@ class MochiFaceView extends WatchUi.WatchFace {
     }
 
     private function isSleepHour(hour as Number) as Boolean {
-        return hour >= 23 || hour < 6;
+        var st = Settings.sleepHour();
+        var wk = Settings.wakeHour();
+        if (st > wk) {
+            return hour >= st || hour < wk;
+        }
+        return hour >= st && hour < wk;
+    }
+
+    private function isYawnHour(hour as Number) as Boolean {
+        var wk = Settings.wakeHour();
+        return hour >= wk && hour < wk + 3;
     }
 
     private function displayHour(hour as Number) as Number {
@@ -183,6 +203,99 @@ class MochiFaceView extends WatchUi.WatchFace {
         return h == 0 ? 12 : h;
     }
 
+    // 강조색 (자동이면 fallback)
+    private function accentColor(fallback as Number) as Number {
+        var a = Settings.get(Settings.ACCENT);
+        return a == 0 ? fallback : _accents[a];
+    }
+
+    // =====================================================================
+    // 캐릭터 (픽셀 / 디지털 공용)
+    //   cx: 가운데 x, baseline: 발바닥 y, s: 픽셀 배율
+    //   반환: [머리 오른쪽 위 x, y] (Zzz 위치)
+    // =====================================================================
+    private function drawChar(dc as Dc, ci as Number, frame as Number, cx as Number, baseline as Number,
+                              s as Number, bob as Number, flicker as Boolean, override as Number) as Array<Number> {
+        if (Settings.smoothCharacter()) {
+            var size = s * 22;
+            var x = cx - size / 2;
+            var y = baseline - size;
+            Smooth.drawCharacter(dc, ci, frame, x, y + bob, size, flicker, override);
+            var head = Sprites.SM_HEAD[ci] as Array<Number>;
+            return [x + head[1] * size / 100, y + head[0] * size / 100] as Array<Number>;
+        }
+        var w = (Sprites.W[ci] as Number) * s;
+        var h = (Sprites.H[ci] as Number) * s;
+        var px = cx - w / 2;
+        var py = baseline - h;
+        Pix.drawCharacter(dc, ci, frame, px, py + bob, s, flicker, override);
+        var hd = Sprites.HEAD[ci] as Array<Number>;
+        return [px + hd[1] * s, py + hd[0] * s] as Array<Number>;
+    }
+
+    // 크기 설정 → 배율 (maxH 를 넘지 않게)
+    private function charScale(ci as Number, sizes as Array<Number>, maxH as Number) as Number {
+        var s = sizes[Settings.get(Settings.CHAR_SIZE)];
+        var h = Settings.smoothCharacter() ? 22 : (Sprites.H[ci] as Number);
+        while (s > 2 && h * s > maxH) {
+            s--;
+        }
+        return s;
+    }
+
+    // =====================================================================
+    // 정보 칸
+    // =====================================================================
+    // [아이콘, 색, 글자] / 없음이면 null
+    private function slotInfo(slot as Number) as Array or Null {
+        var t = Settings.get(Settings.SLOT1 + slot);
+        if (t == Settings.DATA_HR) {
+            return [Pix.ICON_HEART, 0xFF4D6D, numText(_hr)];
+        } else if (t == Settings.DATA_BB) {
+            return [Pix.ICON_BOLT, 0x4FC3F7, numText(_bb)];
+        } else if (t == Settings.DATA_STEPS) {
+            return [Pix.ICON_STEPS, 0xFFC94D, stepsText()];
+        } else if (t == Settings.DATA_BATTERY) {
+            return [Pix.ICON_BATT, _bat <= 20 ? 0xFF5252 : 0x7CFC8A, _bat.format("%d") + "%"];
+        } else if (t == Settings.DATA_CALORIES) {
+            return [Pix.ICON_FLAME, 0xFF8A50, _cal.format("%d")];
+        } else if (t == Settings.DATA_DISTANCE) {
+            return [Pix.ICON_PIN, 0x9CCC65, _dist.format("%.1f")];
+        } else if (t == Settings.DATA_FLOORS) {
+            return [Pix.ICON_STAIRS, 0xBA68C8, numText(_floors)];
+        } else if (t == Settings.DATA_STRESS) {
+            return [Pix.ICON_WAVE, 0xFFB74D, numText(_stress)];
+        }
+        return null;
+    }
+
+    private function numText(v as Number or Null) as String {
+        return v == null ? "--" : (v as Number).format("%d");
+    }
+
+    private function stepsText() as String {
+        if (_steps >= 100000) {
+            return (_steps / 1000).format("%d") + "K";
+        }
+        return _steps.format("%d");
+    }
+
+    // 바깥 링 진행률 [0~1, 색]. 끄기면 null
+    private function ringInfo(accent as Number) as Array or Null {
+        var r = Settings.get(Settings.RING);
+        if (r == 0) {
+            var f = _goal > 0 ? _steps.toFloat() / _goal : 0.0;
+            return [f > 1.0 ? 1.0 : f, _steps >= _goal ? 0x7CFC8A : accent];
+        } else if (r == 1) {
+            return [_bat / 100.0, _bat <= 20 ? 0xFF5252 : 0x7CFC8A];
+        } else if (r == 2) {
+            return [_bb == null ? 0.0 : (_bb as Number) / 100.0, 0x4FC3F7];
+        } else if (r == 3) {
+            return [_sec / 60.0, accent];
+        }
+        return null;
+    }
+
     // =====================================================================
     // 픽셀아트 스타일
     // =====================================================================
@@ -190,43 +303,49 @@ class MochiFaceView extends WatchUi.WatchFace {
                                    frame as Number, bob as Number, flicker as Boolean, anim as Boolean) as Void {
         var ox = _ox;
         var oy = _oy;
+        var accent = accentColor(0xFFD23F);
         drawScene(dc, scene, clock, anim);
-        drawStepRing(dc);
+        drawTickRing(dc, ringInfo(accent));
 
         var shadow = 0x2B2B3A;
-        var info = Gregorian.info(Time.now(), Time.FORMAT_SHORT);
 
         // 날짜
-        var date = _days[(info.day_of_week as Number) - 1] + " " + (info.day as Number).format("%d") + " "
-                   + _months[(info.month as Number) - 1];
-        Pix.drawTextShadow(dc, date, 180 + ox, 34 + oy, 3, 0xFFFFFF, shadow);
+        if (Settings.showDate) {
+            var info = Gregorian.info(Time.now(), Time.FORMAT_SHORT);
+            var dow = (info.day_of_week as Number) - 1;
+            if (Settings.koreanDate()) {
+                Pix.drawKoDate(dc, info.month as Number, info.day as Number, dow, 180 + ox, 30 + oy, 3, 2,
+                               0xFFFFFF, shadow);
+            } else {
+                var date = _days[dow] + " " + (info.day as Number).format("%d") + " "
+                           + _months[(info.month as Number) - 1];
+                Pix.drawTextShadow(dc, date, 180 + ox, 34 + oy, 3, 0xFFFFFF, shadow);
+            }
+        }
 
         // 시각
         var h = displayHour(clock.hour);
         var is24 = System.getDeviceSettings().is24Hour;
         var colon = !anim || (clock.sec % 2) == 0;
+        var timeY = Settings.showDate ? 60 : 50;
         dc.setColor(shadow, Graphics.COLOR_TRANSPARENT);
-        Pix.drawTime(dc, h, clock.min, 180 + ox + 4, 60 + oy + 4, 7, colon, is24);
-        dc.setColor(0xFFFFFF, Graphics.COLOR_TRANSPARENT);
-        Pix.drawTime(dc, h, clock.min, 180 + ox, 60 + oy, 7, colon, is24);
+        Pix.drawTime(dc, h, clock.min, 180 + ox + 4, timeY + oy + 4, 7, colon, is24);
+        dc.setColor(Settings.get(Settings.TIME_COLOR) == 1 ? accent : 0xFFFFFF, Graphics.COLOR_TRANSPARENT);
+        Pix.drawTime(dc, h, clock.min, 180 + ox, timeY + oy, 7, colon, is24);
         if (!is24) {
             var ampm = clock.hour < 12 ? "AM" : "PM";
-            Pix.drawTextShadow(dc, ampm, 290 + ox, 64 + oy, 2, 0xFFFFFF, shadow);
+            Pix.drawTextShadow(dc, ampm, 290 + ox, timeY + 4 + oy, 2, 0xFFFFFF, shadow);
         }
 
         // 캐릭터 + 그림자
-        var s = 5;
-        var cw = (Sprites.W[ci] as Number) * s;
-        var ch = (Sprites.H[ci] as Number) * s;
-        var cx = 180 + ox - cw / 2;
-        var cy = 256 + oy - ch;
+        var s = charScale(ci, [4, 5, 6] as Array<Number>, 136);
         var shadowColor = scene == SCENE_SIMPLE ? 0x222222 : ((_grass[scene] as Array)[3] as Number);
         dc.setColor(shadowColor, Graphics.COLOR_TRANSPARENT);
         dc.fillRectangle(180 + ox - 44, 252 + oy, 88, 5);
         dc.fillRectangle(180 + ox - 32, 257 + oy, 64, 4);
-        Pix.drawCharacter(dc, ci, frame, cx, cy + bob, s, flicker, -1);
+        var head = drawChar(dc, ci, frame, 180 + ox, 256 + oy, s, bob, flicker, -1);
         if (frame == FRAME_SLEEP) {
-            drawZzz(dc, ci, cx, cy, s, clock.sec, anim);
+            drawZzz(dc, head[0], head[1], clock.sec, anim, 0xFFFFFF, true);
         }
 
         // 정보 패널
@@ -263,8 +382,7 @@ class MochiFaceView extends WatchUi.WatchFace {
         }
 
         // 해 / 달 / 별
-        var sun = _sunColor[scene];
-        dc.setColor(sun, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_sunColor[scene], Graphics.COLOR_TRANSPARENT);
         if (scene == 0) {
             Pix.disc(dc, 78 + ox, 196 + oy, 22, 4);
         } else if (scene == 1) {
@@ -313,10 +431,10 @@ class MochiFaceView extends WatchUi.WatchFace {
         dc.fillRectangle(0, groundY, _w, _h - groundY);
         dc.setColor(grass[1] as Number, Graphics.COLOR_TRANSPARENT);
         dc.fillRectangle(0, groundY, _w, 6);
-        var x = 0;
-        while (x < _w) {
-            dc.fillRectangle(x, groundY + 6, 4, 4);
-            x += 12;
+        var gx0 = 0;
+        while (gx0 < _w) {
+            dc.fillRectangle(gx0, groundY + 6, 4, 4);
+            gx0 += 12;
         }
         // 풀 무늬
         dc.setColor(grass[3] as Number, Graphics.COLOR_TRANSPARENT);
@@ -334,15 +452,17 @@ class MochiFaceView extends WatchUi.WatchFace {
         dc.fillRectangle(x, y + 16, 56, 8);
     }
 
-    private function drawStepRing(dc as Dc) as Void {
-        var lit = _goal > 0 ? (_steps * 60 / _goal) : 0;
+    private function drawTickRing(dc as Dc, ring as Array or Null) as Void {
+        if (ring == null) {
+            return;
+        }
+        var lit = ((ring[0] as Float) * 60).toNumber();
         if (lit > 60) {
             lit = 60;
         }
-        var done = _steps >= _goal;
         for (var i = 0; i < 60; i++) {
             if (i < lit) {
-                dc.setColor(done ? 0x7CFC8A : 0xFFD23F, Graphics.COLOR_TRANSPARENT);
+                dc.setColor(ring[1] as Number, Graphics.COLOR_TRANSPARENT);
                 dc.fillRectangle(_ringX[i] - 3, _ringY[i] - 3, 6, 6);
             } else {
                 dc.setColor(0xFFFFFF, Graphics.COLOR_TRANSPARENT);
@@ -351,18 +471,21 @@ class MochiFaceView extends WatchUi.WatchFace {
         }
     }
 
-    private function drawZzz(dc as Dc, ci as Number, cx as Number, cy as Number, s as Number,
-                             sec as Number, anim as Boolean) as Void {
-        var head = Sprites.HEAD[ci] as Array;
-        var hx = cx + (head[1] as Number) * s;
-        var hy = cy + (head[0] as Number) * s;
+    // big = true 면 크기 2/3/4 + 그림자, 아니면 2/2/3
+    private function drawZzz(dc as Dc, hx as Number, hy as Number, sec as Number, anim as Boolean,
+                             color as Number, big as Boolean) as Void {
         var phase = anim ? (sec % 4) : 3;
-        var sizes = [2, 3, 4];
-        var dx = [4, 16, 32];
-        var dy = [-14, -32, -56];
+        var sizes = big ? [2, 3, 4] : [2, 2, 3];
+        var dx = big ? [4, 16, 32] : [2, 12, 24];
+        var dy = big ? [-14, -32, -56] : [-8, -22, -38];
         for (var i = 0; i < 3; i++) {
             if (i < phase) {
-                Pix.drawTextShadow(dc, "Z", hx + dx[i], hy + dy[i], sizes[i], 0xFFFFFF, 0x2B2B3A);
+                if (big) {
+                    Pix.drawTextShadow(dc, "Z", hx + dx[i], hy + dy[i], sizes[i], color, 0x2B2B3A);
+                } else {
+                    dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+                    Pix.drawText(dc, "Z", hx + dx[i], hy + dy[i], sizes[i]);
+                }
             }
         }
     }
@@ -379,38 +502,18 @@ class MochiFaceView extends WatchUi.WatchFace {
         dc.setColor(0x3B2A20, Graphics.COLOR_TRANSPARENT);
         dc.fillRectangle(x0 + 4, y0 + 4, pw - 8, ph - 8);
 
-        var text = 0xFFF3D6;
-        var lx = x0 + 12;
-        var rx = x0 + 88;
-        var r1 = y0 + 12;
-        var r2 = y0 + 30;
-
-        dc.setColor(0xFF4D6D, Graphics.COLOR_TRANSPARENT);
-        Pix.drawIcon(dc, Pix.ICON_HEART, lx, r1, 2);
-        dc.setColor(text, Graphics.COLOR_TRANSPARENT);
-        Pix.drawText(dc, _hr == null ? "--" : (_hr as Number).format("%d"), lx + 14, r1, 2);
-
-        dc.setColor(_bat <= 20 ? 0xFF5252 : 0x7CFC8A, Graphics.COLOR_TRANSPARENT);
-        Pix.drawIcon(dc, Pix.ICON_BATT, rx, r1, 2);
-        dc.setColor(text, Graphics.COLOR_TRANSPARENT);
-        Pix.drawText(dc, _bat.format("%d") + "%", rx + 14, r1, 2);
-
-        dc.setColor(0x4FC3F7, Graphics.COLOR_TRANSPARENT);
-        Pix.drawIcon(dc, Pix.ICON_BOLT, lx, r2, 2);
-        dc.setColor(text, Graphics.COLOR_TRANSPARENT);
-        Pix.drawText(dc, _bb == null ? "--" : (_bb as Number).format("%d"), lx + 14, r2, 2);
-
-        dc.setColor(0xFFC94D, Graphics.COLOR_TRANSPARENT);
-        Pix.drawIcon(dc, Pix.ICON_STEPS, rx, r2, 2);
-        dc.setColor(text, Graphics.COLOR_TRANSPARENT);
-        Pix.drawText(dc, stepsText(), rx + 14, r2, 2);
-    }
-
-    private function stepsText() as String {
-        if (_steps >= 100000) {
-            return (_steps / 1000).format("%d") + "K";
+        var xs = [x0 + 12, x0 + 88, x0 + 12, x0 + 88];
+        var ys = [y0 + 12, y0 + 12, y0 + 30, y0 + 30];
+        for (var i = 0; i < 4; i++) {
+            var info = slotInfo(i);
+            if (info == null) {
+                continue;
+            }
+            dc.setColor(info[1] as Number, Graphics.COLOR_TRANSPARENT);
+            Pix.drawIcon(dc, info[0] as Number, xs[i], ys[i], 2);
+            dc.setColor(0xFFF3D6, Graphics.COLOR_TRANSPARENT);
+            Pix.drawText(dc, info[2] as String, xs[i] + 14, ys[i], 2);
         }
-        return _steps.format("%d");
     }
 
     // =====================================================================
@@ -422,7 +525,7 @@ class MochiFaceView extends WatchUi.WatchFace {
         var oy = _oy;
         var cx = 180 + ox;
         var ti = scene == SCENE_SIMPLE ? 4 : scene;
-        var accent = _digAccent[ti];
+        var accent = accentColor(_digAccent[ti]);
 
         dc.setColor(_digBg[ti], _digBg[ti]);
         dc.clear();
@@ -434,21 +537,21 @@ class MochiFaceView extends WatchUi.WatchFace {
             dc.setAntiAlias(true);
         }
 
-        // 좌: 배터리 / 우: 걸음 아크
+        // 좌: 배터리 / 우: 바깥 링 설정
         var r = 170;
         dc.setPenWidth(8);
         dc.setColor(0x333842, Graphics.COLOR_TRANSPARENT);
-        dc.drawArc(cx, 180 + oy, r, Graphics.ARC_COUNTER_CLOCKWISE, 300, 60);
         dc.drawArc(cx, 180 + oy, r, Graphics.ARC_CLOCKWISE, 240, 120);
-
-        var fs = _goal > 0 ? _steps.toFloat() / _goal : 0.0;
-        if (fs > 1.0) {
-            fs = 1.0;
-        }
-        if (fs > 0.01) {
-            var endS = (300 + (120 * fs).toNumber()) % 360;
-            dc.setColor(_steps >= _goal ? 0x7CFC8A : accent, Graphics.COLOR_TRANSPARENT);
-            dc.drawArc(cx, 180 + oy, r, Graphics.ARC_COUNTER_CLOCKWISE, 300, endS);
+        var ring = ringInfo(accent);
+        if (ring != null) {
+            dc.setColor(0x333842, Graphics.COLOR_TRANSPARENT);
+            dc.drawArc(cx, 180 + oy, r, Graphics.ARC_COUNTER_CLOCKWISE, 300, 60);
+            var f = ring[0] as Float;
+            if (f > 0.01) {
+                var endS = (300 + (120 * f).toNumber()) % 360;
+                dc.setColor(ring[1] as Number, Graphics.COLOR_TRANSPARENT);
+                dc.drawArc(cx, 180 + oy, r, Graphics.ARC_COUNTER_CLOCKWISE, 300, endS);
+            }
         }
         var fb = _bat / 100.0;
         if (fb > 0.01) {
@@ -458,22 +561,39 @@ class MochiFaceView extends WatchUi.WatchFace {
         }
         dc.setPenWidth(1);
 
-        // 날짜
-        var info = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
-        var date = info.day_of_week + " " + (info.day as Number).format("%d") + " " + info.month;
-        dc.setColor(0xBBBBBB, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, 56 + oy, Graphics.FONT_TINY, date, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        // 날짜 (영어: 시스템 글꼴 / 한글: 픽셀 한글)
+        if (Settings.showDate) {
+            var info = Gregorian.info(Time.now(), Time.FORMAT_SHORT);
+            var dow = (info.day_of_week as Number) - 1;
+            if (Settings.koreanDate()) {
+                if (dc has :setAntiAlias) {
+                    dc.setAntiAlias(false);
+                }
+                Pix.drawKoDate(dc, info.month as Number, info.day as Number, dow, cx, 45 + oy, 2, 2, 0xBBBBBB, -1);
+                if (dc has :setAntiAlias) {
+                    dc.setAntiAlias(true);
+                }
+            } else {
+                var date = _daysMed[dow] + " " + (info.day as Number).format("%d") + " "
+                           + _monthsMed[(info.month as Number) - 1];
+                dc.setColor(0xBBBBBB, Graphics.COLOR_TRANSPARENT);
+                dc.drawText(cx, 56 + oy, Graphics.FONT_TINY, date,
+                            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+            }
+        }
 
         // 시각
         var is24 = System.getDeviceSettings().is24Hour;
         var h = displayHour(clock.hour);
         var hs = is24 ? h.format("%02d") : h.format("%d");
         var time = hs + ":" + clock.min.format("%02d");
-        dc.setColor(0xFFFFFF, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, 122 + oy, Graphics.FONT_NUMBER_HOT, time, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        var timeY = Settings.showDate ? 118 : 108;
+        dc.setColor(Settings.get(Settings.TIME_COLOR) == 1 ? accent : 0xFFFFFF, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, timeY + oy, Graphics.FONT_NUMBER_HOT, time,
+                    Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         if (!is24) {
             dc.setColor(accent, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx + 124, 96 + oy, Graphics.FONT_XTINY, clock.hour < 12 ? "AM" : "PM",
+            dc.drawText(cx + 124, timeY - 26 + oy, Graphics.FONT_XTINY, clock.hour < 12 ? "AM" : "PM",
                         Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         }
 
@@ -481,42 +601,34 @@ class MochiFaceView extends WatchUi.WatchFace {
             dc.setAntiAlias(false);
         }
 
-        // 캐릭터 (작게)
-        var s = 4;
-        var cw = (Sprites.W[ci] as Number) * s;
-        var ch = (Sprites.H[ci] as Number) * s;
-        var px = cx - cw / 2;
-        var py = 252 + oy - ch;
-        Pix.drawCharacter(dc, ci, frame, px, py + bob, s, flicker, -1);
+        // 캐릭터
+        var s = charScale(ci, [3, 4, 5] as Array<Number>, 100);
+        var head = drawChar(dc, ci, frame, cx, 256 + oy, s, bob, flicker, -1);
         if (frame == FRAME_SLEEP) {
-            var phase = anim ? (clock.sec % 4) : 3;
-            var head = Sprites.HEAD[ci] as Array;
-            var hx = px + (head[1] as Number) * s;
-            var hy = py + (head[0] as Number) * s;
-            dc.setColor(accent, Graphics.COLOR_TRANSPARENT);
-            if (phase > 0) { Pix.drawText(dc, "Z", hx + 2, hy - 8, 2); }
-            if (phase > 1) { Pix.drawText(dc, "Z", hx + 12, hy - 22, 2); }
-            if (phase > 2) { Pix.drawText(dc, "Z", hx + 24, hy - 38, 3); }
+            drawZzz(dc, head[0], head[1], clock.sec, anim, accent, false);
         }
 
-        // 정보 3칸
+        // 정보 칸 1~3 (가로 3칸) + 4 (아래)
         var cols = [cx - 70, cx, cx + 70];
-        var icons = [Pix.ICON_HEART, Pix.ICON_BOLT, Pix.ICON_STEPS];
-        var colors = [0xFF4D6D, 0x4FC3F7, accent];
-        var vals = [_hr == null ? "--" : (_hr as Number).format("%d"),
-                    _bb == null ? "--" : (_bb as Number).format("%d"),
-                    stepsText()];
         for (var i = 0; i < 3; i++) {
-            dc.setColor(colors[i], Graphics.COLOR_TRANSPARENT);
-            Pix.drawIcon(dc, icons[i], cols[i] - 5, 262 + oy, 2);
+            var info = slotInfo(i);
+            if (info == null) {
+                continue;
+            }
+            dc.setColor(info[1] as Number, Graphics.COLOR_TRANSPARENT);
+            Pix.drawIcon(dc, info[0] as Number, cols[i] - 5, 264 + oy, 2);
             dc.setColor(0xFFFFFF, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cols[i], 292 + oy, Graphics.FONT_TINY, vals[i],
+            dc.drawText(cols[i], 293 + oy, Graphics.FONT_TINY, info[2] as String,
                         Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         }
-        // 배터리 %
-        dc.setColor(0x999999, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, 326 + oy, Graphics.FONT_XTINY, _bat.format("%d") + "%",
-                    Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        var i4 = slotInfo(3);
+        if (i4 != null) {
+            dc.setColor(i4[1] as Number, Graphics.COLOR_TRANSPARENT);
+            Pix.drawIcon(dc, i4[0] as Number, cx - 30, 321 + oy, 2);
+            dc.setColor(0xBBBBBB, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(cx + 6, 326 + oy, Graphics.FONT_XTINY, i4[2] as String,
+                        Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        }
     }
 
     // =====================================================================
@@ -533,25 +645,30 @@ class MochiFaceView extends WatchUi.WatchFace {
         var is24 = System.getDeviceSettings().is24Hour;
         var h = displayHour(clock.hour);
 
-        if (Settings.style == 0) {
+        if (Settings.showDate) {
             var info = Gregorian.info(Time.now(), Time.FORMAT_SHORT);
-            var date = _days[(info.day_of_week as Number) - 1] + " " + (info.day as Number).format("%d");
-            dc.setColor(0x777777, Graphics.COLOR_TRANSPARENT);
-            Pix.drawText(dc, date, cx - Pix.textWidth(date, 2) / 2, 78 + oy, 2);
+            var dow = (info.day_of_week as Number) - 1;
+            if (Settings.koreanDate()) {
+                Pix.drawKoDate(dc, 0, info.day as Number, dow, cx, 70 + oy, 2, 2, 0x777777, -1);
+            } else {
+                var date = _days[dow] + " " + (info.day as Number).format("%d");
+                dc.setColor(0x777777, Graphics.COLOR_TRANSPARENT);
+                Pix.drawText(dc, date, cx - Pix.textWidth(date, 2) / 2, 78 + oy, 2);
+            }
+        }
+
+        if (Settings.get(Settings.STYLE) == 0) {
             dc.setColor(0xAAAAAA, Graphics.COLOR_TRANSPARENT);
             Pix.drawTime(dc, h, m, cx, 100 + oy, 5, true, is24);
         } else {
             var hs = is24 ? h.format("%02d") : h.format("%d");
             dc.setColor(0xAAAAAA, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, 120 + oy, Graphics.FONT_NUMBER_MEDIUM, hs + ":" + m.format("%02d"),
+            dc.drawText(cx, 124 + oy, Graphics.FONT_NUMBER_MEDIUM, hs + ":" + m.format("%02d"),
                         Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         }
 
         // 잠자는 캐릭터 외곽선만
-        var s = 3;
-        var cw = (Sprites.W[ci] as Number) * s;
-        var ch = (Sprites.H[ci] as Number) * s;
-        Pix.drawCharacter(dc, ci, FRAME_SLEEP, cx - cw / 2, 256 + oy - ch, s, false, 0x5A5A5A);
+        drawChar(dc, ci, FRAME_SLEEP, cx, 256 + oy, 3, 0, false, 0x5A5A5A);
 
         // 분마다 도는 점
         var a = m * Math.PI / 30.0;
@@ -585,22 +702,41 @@ class MochiFaceView extends WatchUi.WatchFace {
         // 배터리
         _bat = System.getSystemStats().battery.toNumber();
 
-        // 걸음
+        // 걸음 / 칼로리 / 거리 / 층수
         var am = ActivityMonitor.getInfo();
         _steps = (am.steps != null) ? (am.steps as Number) : 0;
         var g = am.stepGoal;
         _goal = (g != null && (g as Number) > 0) ? (g as Number) : 10000;
+        _cal = (am.calories != null) ? (am.calories as Number) : 0;
+        var cm = (am.distance != null) ? (am.distance as Number) : 0;
+        var metric = System.getDeviceSettings().distanceUnits == System.UNIT_METRIC;
+        _dist = metric ? cm / 100000.0 : cm / 160934.4;
+        _floors = null;
+        if (am has :floorsClimbed) {
+            _floors = am.floorsClimbed;
+        }
 
-        // Body Battery
+        // Body Battery / 스트레스
         _bb = null;
-        if ((Toybox has :SensorHistory) && (SensorHistory has :getBodyBatteryHistory)) {
-            var bi = SensorHistory.getBodyBatteryHistory({:period => 1});
-            if (bi != null) {
-                var b = bi.next();
-                if (b != null && b.data != null) {
-                    _bb = (b.data as Numeric).toNumber();
-                }
+        _stress = null;
+        if (Toybox has :SensorHistory) {
+            if (SensorHistory has :getBodyBatteryHistory) {
+                _bb = lastSample(SensorHistory.getBodyBatteryHistory({:period => 1}));
+            }
+            if (SensorHistory has :getStressHistory) {
+                _stress = lastSample(SensorHistory.getStressHistory({:period => 1}));
             }
         }
+    }
+
+    private function lastSample(it) as Number or Null {
+        if (it == null) {
+            return null;
+        }
+        var s = it.next();
+        if (s != null && s.data != null) {
+            return (s.data as Numeric).toNumber();
+        }
+        return null;
     }
 }
