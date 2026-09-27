@@ -19,6 +19,8 @@ Forerunner 265S/265용 픽셀 캐릭터 워치페이스. Monkey C.
 - 디지털 캐릭터 스타일은 `tools/fetch_assets.py`가 만든 비트맵(도롱이 = `assets/dorongi.png`, 사용자가 제공·커밋 허락함, 표정 5종 자동 생성)을
   우선 쓰고, 없으면 `Smooth.mc` 벡터로 대체한다. 생성물(`source/Assets.mc`, `resources/drawables/assets*`,
   `preview/assets.js`)은 커밋하지 않는다. 로컬 확인 전 `pip install pillow && python3 tools/fetch_assets.py`.
+- AOD 판단은 매 onUpdate 마다 `System.getDisplayMode()`(API 5+)로 한다. `requiresBurnInProtection`을 시작할 때 한 번만
+  읽어 저장하면 AOD 에서 일반 화면을 그려 10% 규칙을 어기고, 워치가 시스템 기본 시계로 바꿔 버린다 (실기기에서 확인된 버그).
 - 한글 날짜는 시스템 폰트 대신 `HANGUL` 픽셀 글리프로 그린다 (한글 폰트 없는 모델 대비).
 - 좌표는 360x360 기준으로 설계하고 `_ox/_oy`만큼 옮겨 그린다 (FR265 416px 대응).
 - 스프라이트 런 인코딩: `x | y<<6 | w<<12 | color<<18`, 팔레트 0=투명, 1=외곽선(AOD에서 이것만 그림).
