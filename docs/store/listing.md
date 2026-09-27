@@ -7,7 +7,7 @@
 
 | 항목 | 파일 |
 |---|---|
-| 업로드 패키지 | `.\build.ps1 -Store -Release` → `bin\MochiPixel.iq` (CI 결과물에도 포함) |
+| 업로드 패키지 | CI 결과물 **`MochiPixel-store-upload`** 의 `MochiPixel.iq` (본인 키 `DEVELOPER_KEY_B64` 로 서명됨), 또는 PC에서 `.\build.ps1 -Store -Release` |
 | 스토어 아이콘 | `docs/store/icon-512.png` |
 | 스크린샷 | `docs/store/screenshots/*.png` (360x360, `cd tools/check && npm run screens` 로 다시 생성) |
 

@@ -41,6 +41,8 @@ jobs:
     env:
       GARMIN_USERNAME: ${{ secrets.GARMIN_USERNAME }}
       GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
+      # 본인 개발자 키 (tools/make_key.ps1 로 만든 base64 텍스트). 있으면 스토어 업로드용 .iq 를 이 키로 서명
+      DEVELOPER_KEY_B64: ${{ secrets.DEVELOPER_KEY_B64 }}
     steps:
       - uses: actions/checkout@v5
 
@@ -89,8 +91,23 @@ jobs:
         if: steps.secrets.outputs.ok == 'true'
         run: |
           mkdir -p keys bin
-          openssl genrsa -out keys/ci.pem 4096 2>/dev/null
-          openssl pkcs8 -topk8 -inform PEM -outform DER -in keys/ci.pem -out keys/ci.der -nocrypt
+          # 서명 키: 본인 키가 있으면 그것, 없으면 임시 키 (임시 키 .iq 는 스토어 업데이트에 못 씀)
+          SIGNED=0
+          if [ -n "$DEVELOPER_KEY_B64" ]; then
+            if printf %s "$DEVELOPER_KEY_B64" | base64 -d > keys/ci.der 2>/dev/null \
+               && openssl pkey -inform DER -in keys/ci.der -noout 2>/dev/null; then
+              SIGNED=1
+              echo "::notice title=서명 키::본인 개발자 키로 서명합니다 (스토어 업로드용)"
+            else
+              echo "::error title=서명 키::DEVELOPER_KEY_B64 값이 올바른 키가 아닙니다. tools/make_key.ps1 로 다시 복사해 넣으세요."
+              exit 1
+            fi
+          else
+            openssl genrsa -out keys/ci.pem 4096 2>/dev/null
+            openssl pkcs8 -topk8 -inform PEM -outform DER -in keys/ci.pem -out keys/ci.der -nocrypt
+            echo "::warning title=서명 키::DEVELOPER_KEY_B64 비밀값이 없어 임시 키로 서명했습니다. 사이드로드는 되지만 이 .iq 는 스토어 업데이트에 쓸 수 없습니다."
+          fi
+          echo "SIGNED=$SIGNED" >> "$GITHUB_ENV"
           fail=0
           # 컴파일 오류/경고 줄을 주석(annotation)으로 남김
           build() {
@@ -124,3 +141,11 @@ jobs:
           path: |
             bin/*.prg
             bin/*.iq
+
+      # 본인 키로 서명했을 때만: 스토어(베타/공개) 업로드용 패키지를 따로 올림
+      - name: 스토어 업로드용 .iq
+        if: steps.secrets.outputs.ok == 'true' && env.SIGNED == '1'
+        uses: actions/upload-artifact@v4
+        with:
+          name: MochiPixel-store-upload
+          path: bin/MochiPixel.iq

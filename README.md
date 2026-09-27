@@ -117,6 +117,27 @@ PowerShell에서 `garmin-character-face` 폴더로 이동한 뒤:
 4. 케이블을 뽑으면 워치가 앱을 설치합니다.
 5. 워치에서 시계 화면을 길게 누르기 → **워치 페이스** → **Pixel Pals(픽셀 친구들)** 선택.
 
+## 3-1. USB 없이 휴대폰으로 설치하기 (베타 앱)
+
+Connect IQ 스토어에 **베타 앱**으로 올리면 본인 계정에만 보이고, 휴대폰으로 설치·업데이트할 수 있습니다.
+Garmin Connect 앱에서 워치페이스 설정도 바꿀 수 있습니다.
+
+**처음 한 번: 서명 키 등록**
+스토어는 항상 같은 키로 서명한 패키지만 업데이트로 받아 줍니다. 키를 한 번 만들어 GitHub에 등록해 둡니다.
+1. PC에서 저장소 폴더를 열고 `powershell -ExecutionPolicy Bypass -File tools\make_key.ps1` 실행
+   (macOS/Linux: `./tools/make_key.sh`). 이미 `keys\developer_key.der`가 있으면 그 키를 씁니다.
+2. 클립보드에 복사된 텍스트를 저장소 **Settings → Secrets and variables → Actions**에
+   `DEVELOPER_KEY_B64` 이름으로 등록
+3. `keys\developer_key.der` 파일을 안전한 곳에 백업 (잃어버리면 같은 앱으로 업데이트 불가, 저장소에는 올라가지 않음)
+
+**올리기 / 업데이트**
+1. GitHub **Actions** 탭에서 최신 **Build** 실행 → Artifacts의 **`MochiPixel-store-upload`** 를 받아 압축 해제 → `MochiPixel.iq`
+2. [Connect IQ 개발자 페이지](https://apps.garmin.com/developer/upload)에서 업로드하면서 **베타 앱**으로 지정
+   (처음 올릴 때 이름·설명·아이콘·스크린샷은 [`docs/store/listing.md`](docs/store/listing.md) 참고)
+3. 휴대폰 **Connect IQ 앱**(또는 Garmin Connect → Connect IQ 스토어)에서 같은 계정으로 설치 → 블루투스로 워치에 설치됨
+4. 업데이트: 코드를 푸시하고 새 `MochiPixel.iq`를 같은 앱의 새 버전으로 올리면 휴대폰으로 업데이트됩니다.
+   올릴 때마다 `manifest-store.xml`의 `version`을 올려야 합니다.
+
 ## 외부 캐릭터 에셋 (디지털 캐릭터 스타일)
 
 캐릭터 스타일이 **디지털**이면 직접 그린 벡터 그림 대신 이미지를 씁니다.
