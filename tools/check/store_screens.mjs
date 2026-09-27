@@ -1,4 +1,4 @@
-// 스토어용 스크린샷 (모찌만) → docs/store/screenshots/*.png   (Playwright 필요)
+// 스토어용 스크린샷 (모찌·도롱이, 먼저 python tools/fetch_assets.py) → docs/store/screenshots/*.png   (Playwright 필요)
 //   node store_screens.mjs
 import fs from 'fs';
 import path from 'path';
@@ -14,13 +14,13 @@ fs.mkdirSync(out, { recursive: true });
 const SHOTS = [
   ['01-pixel-day', { style: 0, hour: 13, min: 24 }],
   ['02-pixel-morning', { style: 0, hour: 7, min: 5, sec: 8, animate: true }],
-  ['03-pixel-evening', { style: 0, hour: 18, min: 42, charStyle: 2 }],
+  ['03-pixel-dorongi-evening', { style: 0, hour: 18, min: 42, character: 1 }],
   ['04-pixel-night-sleep', { style: 0, hour: 23, min: 48, sec: 3, animate: true, wx: 3 }],
   ['05-digital', { style: 1, hour: 10, min: 9, accent: 4, dateLang: 1 }],
-  ['06-digital-rain', { style: 1, hour: 16, min: 30, wx: 2, charStyle: 1, sec: 5, animate: true, slots: [9, 3, 1, 4] }],
-  ['07-scenery-sea', { style: 0, hour: 18, min: 20, scenery: 1 }],
+  ['06-digital-dorongi-rain', { style: 1, hour: 16, min: 30, wx: 2, character: 1, charStyle: 0, sec: 5, animate: true, slots: [9, 3, 1, 4] }],
+  ['07-scenery-sea', { style: 0, hour: 18, min: 20, scenery: 1, character: 1 }],
   ['08-scenery-cherry', { style: 0, hour: 10, min: 30, scenery: 4, animate: true, sec: 3 }],
-  ['09-scenery-space', { style: 0, hour: 22, min: 5, scenery: 6, animate: true, sec: 2 }],
+  ['09-scenery-space', { style: 0, hour: 22, min: 5, scenery: 6, animate: true, sec: 2, character: 1 }],
   ['10-aod', { style: 0, aod: true, hour: 1, min: 12 }],
 ];
 

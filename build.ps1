@@ -3,7 +3,7 @@
 #   .\build.ps1              # FR265S용 빌드 → bin\PixelPals.prg
 #   .\build.ps1 -Run         # 빌드 후 시뮬레이터 실행
 #   .\build.ps1 -Device fr265
-#   .\build.ps1 -Store       # 스토어판(모찌만) 빌드 → bin\MochiPixel.prg
+#   .\build.ps1 -Store       # 스토어판(Mochi Pixel) 빌드 → bin\MochiPixel.prg
 #   .\build.ps1 -Store -Release   # 스토어 업로드용 .iq 패키지 → bin\MochiPixel.iq
 #
 # 실행 정책 오류가 나면: powershell -ExecutionPolicy Bypass -File .\build.ps1
@@ -60,10 +60,10 @@ if (Get-Command python -ErrorAction SilentlyContinue) {
 
 New-Item -ItemType Directory -Force (Join-Path $root "bin") | Out-Null
 
-# 전체판(개인용, 모찌·도롱이) / 스토어판(모찌만)
+# 전체판(Pixel Pals, 사이드로드용) / 스토어판(Mochi Pixel, 스토어 업로드용)
 if ($Store) { $jungle = "store.jungle"; $name = "MochiPixel" } else { $jungle = "monkey.jungle"; $name = "PixelPals" }
 if ($Release -and -not $Store) {
-    Write-Warning "전체판에는 도롱이(원작자 권리 확인 필요)가 들어 있어 스토어에 올리면 안 됩니다. 스토어용은 -Store -Release 를 쓰세요."
+    Write-Warning "스토어에는 스토어판(-Store -Release)을 올리세요. 전체판은 앱 ID가 달라 사이드로드용입니다."
 }
 
 if ($Release) {

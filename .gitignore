@@ -5,7 +5,8 @@ keys/
 __pycache__/
 # 외부 에셋 (저작권 - 빌드 때 tools/fetch_assets.py 로 생성)
 assets/cache/
-resources-full/drawables/
-source-full/Assets.mc
+resources/drawables/assets/
+resources/drawables/assets.xml
+source/Assets.mc
 preview/assets.js
 node_modules/

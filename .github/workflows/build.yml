@@ -20,7 +20,7 @@ jobs:
           python tools/gen_sprites.py
           git diff --exit-code -- source-full/Sprites.mc source-store/Sprites.mc preview/sprites.js
       - name: 에셋 스크립트 (Pillow 없이 대체 파일 생성)
-        run: python tools/fetch_assets.py && test -f source-full/Assets.mc
+        run: python tools/fetch_assets.py && test -f source/Assets.mc
       - name: 미리보기 JS 문법 검사
         run: node --check preview/watchface.js
       - name: 리소스 교차 검사

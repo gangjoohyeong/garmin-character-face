@@ -26,8 +26,8 @@ VARIANTS = [
     {"name": "전체판", "jungle": "monkey.jungle", "manifest": "manifest.xml", "src": "source-full", "res": "resources-full"},
     {"name": "스토어판", "jungle": "store.jungle", "manifest": "manifest-store.xml", "src": "source-store", "res": "resources-store"},
 ]
-# 스토어판에 들어가면 안 되는 이름 (원작자 권리 확인 필요)
-NOT_FOR_STORE = ["Dorongi", "dorongi"]
+# 스토어판에 들어가면 안 되는 이름 (지금은 없음: 모찌·도롱이 모두 사용자 오리지널)
+NOT_FOR_STORE = []
 # 저장소 어디에도 들어가면 안 되는 말 (저작권 문제로 제거한 캐릭터·에셋 출처).
 # 대소문자 무시. 이 파일 자체와 git 기록은 검사하지 않는다.
 BANNED = [b"pok\xc3\xa9mon", b"pokemon", b"pokeapi", b"squirtle", b"charmander", b"nintendo",
@@ -88,8 +88,8 @@ def check_variant(v, eng):
     for d in (v["src"], v["res"]):
         if d not in jungle:
             err(tag + "%s 에 %s 경로가 없음" % (v["jungle"], d))
-    if not os.path.exists(os.path.join(ROOT, v["src"], "Assets.mc")):
-        err(tag + "%s/Assets.mc 가 없음 (python tools/fetch_assets.py 를 실행하세요)" % v["src"])
+    if not os.path.exists(os.path.join(ROOT, "source", "Assets.mc")):
+        err(tag + "source/Assets.mc 가 없음 (python tools/fetch_assets.py 를 실행하세요)")
 
     # 문자열 참조
     for name in sorted(set(re.findall(r"Rez\.Strings\.(\w+)", code))):
@@ -202,8 +202,6 @@ def check_variant(v, eng):
         for bad in NOT_FOR_STORE:
             if bad in store_text:
                 err(tag + "스토어판에 '%s' 가 들어 있음" % bad)
-        if glob.glob(os.path.join(ROOT, v["res"], "drawables", "assets", "*")):
-            err(tag + "스토어판 리소스에 외부 에셋이 있음")
 
     return keys, counts
 

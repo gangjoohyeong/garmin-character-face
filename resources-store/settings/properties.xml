@@ -1,5 +1,6 @@
 <properties>
     <property id="Style" type="number">0</property>
+    <property id="Character" type="number">0</property>
     <property id="CharStyle" type="number">0</property>
     <property id="CharSize" type="number">1</property>
     <property id="Background" type="number">0</property>

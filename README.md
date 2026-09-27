@@ -54,8 +54,8 @@
 
 ```
 garmin-character-face/
-├─ monkey.jungle / manifest.xml         전체판 (개인 사용: 모찌·도롱이)
-├─ store.jungle / manifest-store.xml    스토어판 (공개 배포용: 모찌만, 앱 이름 Mochi Pixel)
+├─ monkey.jungle / manifest.xml         전체판 (개인 사이드로드용, 앱 이름 Pixel Pals)
+├─ store.jungle / manifest-store.xml    스토어판 (공개 배포용, 앱 이름 Mochi Pixel). 캐릭터는 두 판 모두 모찌·도롱이
 ├─ build.ps1 / build.sh                 빌드 스크립트
 ├─ source/                              공통 코드
 │  ├─ MochiFaceApp.mc                   앱 진입점, 설정 변경 처리
@@ -65,10 +65,10 @@ garmin-character-face/
 │  ├─ Scenery.mc                        풍경 (바다·도시·설산·벚꽃·단풍·우주)
 │  ├─ Settings.mc                       설정 저장/불러오기
 │  └─ SettingsMenu.mc                   워치 자체 설정 메뉴
-├─ source-full/  source-store/          판별 캐릭터 데이터 (Sprites.mc 자동 생성, Assets.mc)
+├─ source-full/  source-store/          판별 캐릭터 데이터 (Sprites.mc 자동 생성)
 ├─ resources/  resources-kor/           공통 문자열(영/한)·아이콘
-├─ resources-full/  resources-full-kor/ 전체판 설정 정의·캐릭터 이름·외부 에셋
-├─ resources-store/                     스토어판 설정 정의
+├─ resources-full/  resources-store/    판별 설정 정의
+├─ assets/dorongi.png                   도롱이 원본 그림 (빌드 때 크기별·표정별 비트맵으로 가공)
 ├─ tools/gen_sprites.py                 캐릭터 그림 정의 → Sprites.mc / sprites.js / 아이콘 생성
 ├─ tools/fetch_assets.py                외부 에셋 받기·가공 → Assets.mc / assets.js (커밋 안 함)
 ├─ tools/check_resources.py, tools/check/   컴파일 없이 하는 검사
@@ -128,11 +128,11 @@ PowerShell에서 `garmin-character-face` 폴더로 이동한 뒤:
 
 - `tools/fetch_assets.py`가 이미지를 크기별(66/88/110/132px) 비트맵과 AOD용 외곽선으로 만듭니다.
   `build.ps1`, `build.sh`, CI가 빌드 전에 자동으로 실행합니다 (Python + Pillow 필요, 없으면 설치 시도).
-- 가공 결과물(`source-full/Assets.mc`, `resources-full/drawables/`)은 빌드 때마다 만들어서 커밋하지 않습니다.
+- 가공 결과물(`source/Assets.mc`, `resources/drawables/assets*`)은 빌드 때마다 만들어서 커밋하지 않습니다.
 - 이미지를 구하지 못하면(파일 없음, Pillow 없음) 그 캐릭터는 벡터 그림으로 대신 그려서 빌드는 항상 됩니다.
 - **도롱이 이미지는 표정 5가지**(기본, 깜빡임, 하품, 수면, 목표 달성 웃음)를 원본 그림에서 자동으로 만들어 씁니다.
   원본의 눈·입을 머리 색으로 지우고 같은 선으로 다시 그립니다 (`tools/fetch_assets.py`의 `DORONGI_FACE` 좌표).
-- VS Code에서 바로 빌드하려면 먼저 `python tools/fetch_assets.py`를 한 번 실행해 `source-full/Assets.mc`를 만드세요.
+- VS Code에서 바로 빌드하려면 먼저 `python tools/fetch_assets.py`를 한 번 실행해 `source/Assets.mc`를 만드세요.
 
 **도롱이 이미지:** `assets/dorongi.png`(저장소에 포함)를 씁니다. 다른 그림으로 바꾸려면 이 파일을 교체하고 빌드하세요.
 전신이 보이고 배경이 흰색이거나 투명한 이미지면 됩니다.
@@ -186,13 +186,12 @@ SDK와 기기 파일은 Garmin 계정으로 로그인해야 받을 수 있어서
 
 수정한 뒤 `python tools/gen_sprites.py`를 실행하면 워치용 `source-full/Sprites.mc`·`source-store/Sprites.mc`와
 미리보기용 `preview/sprites.js`가 함께 갱신됩니다 (`build.ps1`도 자동 실행).
-새 캐릭터를 추가하면 캐릭터 정의에 `label`(이름 문자열 ID)을 넣고, `resources-full/settings/settings.xml` 목록과
-이름 문자열(`resources-full*/strings/characters.xml`)을 추가하세요. 오리지널 캐릭터라면 `"store": True`로 스토어판에도 넣을 수 있습니다.
+새 캐릭터를 추가하면 캐릭터 정의에 `label`(이름 문자열 ID)을 넣고, 두 판의 `settings.xml` 목록과
+이름 문자열(`resources*/strings/strings.xml`)을 추가하세요. 오리지널 캐릭터라면 `"store": True`로 스토어판에도 넣을 수 있습니다.
 
 ## 참고
 
-- 도롱이는 사용자가 제공한 캐릭터 그림을 바탕으로 합니다. 원작자 권리를 확인하기 전에는 스토어에 공개 배포하지 말고,
-  모찌만 들어간 **스토어판**(`store.jungle`)을 올리세요. `check_resources.py`가 스토어판에 다른 캐릭터가 섞이지 않았는지 검사합니다.
+- 모찌와 도롱이는 모두 오리지널 캐릭터입니다 (도롱이는 저장소 주인이 직접 만든 캐릭터). 두 판 모두에 들어갑니다.
 - 저작권 문제가 될 수 있는 팬아트 캐릭터는 제거했습니다 (이전 상태는 `backup/fanart-characters` 브랜치에 보관).
   `check_resources.py`가 관련 이름이 다시 들어오지 않았는지 검사합니다.
 - 워치페이스는 고전력 모드(손목을 들었을 때 약 10초)에만 1초마다 갱신되고, 그 외에는 1분마다 갱신됩니다. 애니메이션은 손목을 든 동안에만 움직입니다.

@@ -127,6 +127,7 @@ def build_dorongi_grid():
 DORONGI = {
     "name": "dorongi",
     "label": "CharDorongi",
+    "store": True,        # 사용자가 직접 만든 오리지널 캐릭터 → 스토어판에 포함
     "palette": {
         "K": 0x2B2A22, "H": 0xD8D49B, "B": 0xF4EFD3, "T": 0xE3E0A6,
         "S": 0xB5BF74, "W": 0xFFFFFF, "R": 0xE0506A,
@@ -470,8 +471,9 @@ def write_icon(c, path, size=60, s=2):   # FR265S/265 런처 아이콘 규격 60
         for x in range(size):
             if (x + 0.5 - r) ** 2 + (y + 0.5 - r) ** 2 <= r * r:
                 pix[y][x] = (0x75, 0xC6, 0xF9, 255) if y < size * 0.68 else (0x6C, 0xCB, 0x4E, 255)
-    ox = (size - c["w"] * s) // 2
-    oy = int(size * 0.72) - c["h"] * s
+    # 몸 중심(anchor2, 반 칸 단위)을 가운데에, 키가 커도 머리가 잘리지 않게
+    ox = (size - c["anchor2"] * s) // 2
+    oy = max(3, int(size * 0.72) - c["h"] * s)
     for v in c["base"]:
         x, y, w, ci = v & 63, (v >> 6) & 63, (v >> 12) & 63, (v >> 18) & 15
         col = c["pal"][ci]
@@ -586,9 +588,11 @@ def main():
         f.write("// 자동 생성 파일 - tools/gen_sprites.py\n")
         f.write("window.SPRITES = " + json.dumps(js) + ";\n")
 
-    write_icon(chars[0], os.path.join(ROOT, "resources", "drawables", "launcher_icon.png"))
+    # 런처 아이콘 / 스토어 아이콘: 도롱이 (두 판 공통)
+    icon_char = [i for i, c in enumerate(CHARACTERS) if c["name"] == "dorongi"][0]
+    write_icon(chars[icon_char], os.path.join(ROOT, "resources", "drawables", "launcher_icon.png"))
     os.makedirs(os.path.join(ROOT, "docs", "store"), exist_ok=True)
-    write_icon(chars[0], os.path.join(ROOT, "docs", "store", "icon-512.png"), size=512, s=16)
+    write_icon(chars[icon_char], os.path.join(ROOT, "docs", "store", "icon-512.png"), size=512, s=14)
 
     total = sum(len(c["base"]) + sum(len(x) for x in c["face"]) + len(c["extra"]) for c in chars)
     print("OK: %d characters, %d runs total" % (len(chars), total))

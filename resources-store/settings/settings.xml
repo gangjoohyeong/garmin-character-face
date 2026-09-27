@@ -5,6 +5,13 @@
             <listEntry value="1">@Strings.StyleDigital</listEntry>
         </settingConfig>
     </setting>
+    <setting propertyKey="@Properties.Character" title="@Strings.CharTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.CharMochi</listEntry>
+            <listEntry value="1">@Strings.CharDorongi</listEntry>
+            <listEntry value="2">@Strings.CharRandom</listEntry>
+        </settingConfig>
+    </setting>
     <setting propertyKey="@Properties.CharStyle" title="@Strings.CharStyleTitle">
         <settingConfig type="list">
             <listEntry value="0">@Strings.CharStyleAuto</listEntry>

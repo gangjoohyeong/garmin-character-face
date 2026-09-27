@@ -5,9 +5,9 @@ Forerunner 265S/265용 픽셀 캐릭터 워치페이스. Monkey C.
 ## 규칙
 - 캐릭터·폰트·아이콘 그림은 `tools/gen_sprites.py`에서만 수정한다. 수정 후 `python3 tools/gen_sprites.py`를 실행해
   `source-full/Sprites.mc`, `source-store/Sprites.mc`, `preview/sprites.js`, 아이콘들을 재생성하고 함께 커밋한다.
-- 빌드 판이 둘이다: 전체판(`monkey.jungle`, source-full/resources-full) = 모찌·도롱이 개인용,
-  스토어판(`store.jungle`, source-store/resources-store) = 모찌만. 공통 코드는 `source/`.
-  팬아트 캐릭터 이름·에셋·설정 목록은 절대 공통 폴더나 스토어 폴더에 넣지 않는다 (`check_resources.py`가 검사).
+- 빌드 판이 둘이다: 전체판(`monkey.jungle`, 앱 이름 Pixel Pals, 사이드로드용)과 스토어판(`store.jungle`,
+  manifest-store.xml, 앱 이름 Mochi Pixel, 별도 앱 ID). 캐릭터는 둘 다 모찌·도롱이(둘 다 사용자 오리지널).
+  공통 코드·문자열·아이콘·에셋은 `source/`, `resources/`. 판별로 다른 것은 Sprites.mc(`"store": True` 캐릭터만)와 설정 XML.
 - `preview/watchface.js`는 `source/MochiFaceView.mc`, `Pix.mc`, `Smooth.mc`, `Scenery.mc`를 그대로 옮긴 것이다. 화면 로직을 바꾸면 둘 다 수정한다.
 - 설정 항목을 추가하면 `Settings.mc`(KEYS/COUNTS/DEFAULTS/labels), `SettingsMenu.mc`, 영/한 `strings.xml`,
   두 판의 `properties.xml`·`settings.xml`, `preview/index.html`의 OPTIONS를 함께 바꾼다.
@@ -17,7 +17,7 @@ Forerunner 265S/265용 픽셀 캐릭터 워치페이스. Monkey C.
 - 저작권 문제로 팬아트 캐릭터를 제거했다 (이전 상태: `backup/fanart-characters` 브랜치). 다시 넣지 않는다.
   `check_resources.py`의 BANNED 목록이 관련 이름이 들어오면 실패시킨다.
 - 디지털 캐릭터 스타일은 `tools/fetch_assets.py`가 만든 비트맵(도롱이 = `assets/dorongi.png`, 사용자가 제공·커밋 허락함, 표정 5종 자동 생성)을
-  우선 쓰고, 없으면 `Smooth.mc` 벡터로 대체한다. 생성물(`source-full/Assets.mc`, `resources-full/drawables/`,
+  우선 쓰고, 없으면 `Smooth.mc` 벡터로 대체한다. 생성물(`source/Assets.mc`, `resources/drawables/assets*`,
   `preview/assets.js`)은 커밋하지 않는다. 로컬 확인 전 `pip install pillow && python3 tools/fetch_assets.py`.
 - 한글 날짜는 시스템 폰트 대신 `HANGUL` 픽셀 글리프로 그린다 (한글 폰트 없는 모델 대비).
 - 좌표는 360x360 기준으로 설계하고 `_ox/_oy`만큼 옮겨 그린다 (FR265 416px 대응).

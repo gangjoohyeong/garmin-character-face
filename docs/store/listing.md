@@ -1,7 +1,7 @@
 # Connect IQ 스토어 제출 자료 (스토어판: Mochi Pixel)
 
-스토어에는 **스토어판**(`store.jungle`, 오리지널 캐릭터 모찌만)만 올립니다.
-전체판에는 도롱이(원작자 권리 확인 필요)가 들어 있어 공개 배포하면 안 됩니다.
+스토어에는 **스토어판**(`store.jungle`)을 올립니다. 캐릭터는 오리지널 캐릭터 모찌와 도롱이입니다.
+전체판(`monkey.jungle`, Pixel Pals)은 앱 ID가 달라 개인 사이드로드용으로 따로 둡니다.
 
 ## 파일
 
@@ -18,15 +18,16 @@
 
 ## 짧은 설명
 
-- 한국어: 시간에 따라 하루를 보내는 픽셀 떡 캐릭터 모찌와 함께하는 워치페이스
-- English: A pixel-art watch face with Mochi, a little rice-cake pal who lives through your day
+- 한국어: 떡 캐릭터 모찌, 도마뱀 친구 도롱이와 하루를 함께 보내는 픽셀 워치페이스
+- English: A pixel-art watch face with Mochi the rice cake and Dorongi the little lizard, living through your day
 
 ## 설명 (한국어)
 
-모찌는 여러분의 하루를 함께 보내는 작은 떡 캐릭터입니다.
+작은 떡 캐릭터 **모찌**와 도마뱀 친구 **도롱이**가 여러분의 하루를 함께 보냅니다.
 
 - 실제 일출·일몰에 맞춰 바뀌는 아침·낮·저녁·밤 픽셀 풍경, 날짜에 맞게 차고 기우는 달
-- 손목을 들면 깜빡이고 숨 쉬고, 아침엔 하품하고, 밤엔 Zzz 잠드는 모찌
+- 손목을 들면 깜빡이고 숨 쉬고, 아침엔 하품하고, 밤엔 Zzz 잠드는 캐릭터 (매일 랜덤으로 바꿔 가며 볼 수도 있어요)
+- 바다, 도시, 설산, 벚꽃, 단풍, 우주 풍경과 계절 자동 풍경
 - 걸음 목표를 채우면 웃는 눈으로 축하해 줘요
 - 비·눈 날씨 효과와 기온 표시
 - 픽셀아트 / 디지털 두 가지 스타일, 캐릭터도 픽셀 또는 부드러운 그림으로 선택
@@ -38,10 +39,11 @@
 
 ## Description (English)
 
-Mochi is a tiny rice-cake pal who spends the day with you.
+**Mochi**, a tiny rice-cake pal, and **Dorongi**, a little lizard friend, spend the day with you.
 
 - Pixel-art morning, day, evening and night scenes that follow your real sunrise and sunset, with the current moon phase
-- Mochi blinks and breathes when you raise your wrist, yawns in the morning and sleeps with Zzz at night
+- Your pal blinks and breathes when you raise your wrist, yawns in the morning and sleeps with Zzz at night (or pick a random pal each day)
+- Seaside, city, snowy peaks, cherry blossom, autumn and space scenery, plus a seasonal mode
 - Happy eyes when you reach your step goal
 - Rain and snow effects, current temperature
 - Pixel-art or digital face; pixel or smooth character
@@ -61,7 +63,7 @@ Settings: long-press the watch face → Watch Face → Customize, or in Garmin C
 
 ## 제출 전 체크리스트
 
-- [ ] 시뮬레이터에서 스토어판 확인 (`.\build.ps1 -Store -Run`): 캐릭터 메뉴가 없고 모찌만 나오는지
+- [ ] 시뮬레이터에서 스토어판 확인 (`.\build.ps1 -Store -Run`): 모찌·도롱이 선택과 표정이 정상인지
 - [ ] 시뮬레이터 AOD 모드에서 번인 경고가 없는지 (Settings → Display Mode → Always On)
 - [ ] 워치 메뉴와 Garmin Connect 설정이 모두 동작하는지
 - [ ] 한국어 / 영어 기기 언어에서 글자가 깨지지 않는지

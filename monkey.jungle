@@ -1,5 +1,5 @@
-# 전체판 (개인 사용): 모찌 + 도롱이
+# 전체판: 모찌 + 도롱이 (개인 사이드로드용)
 project.manifest = manifest.xml
 base.sourcePath = source;source-full
 base.resourcePath = resources;resources-full
-base.lang.kor = resources-kor;resources-full-kor
+base.lang.kor = resources-kor

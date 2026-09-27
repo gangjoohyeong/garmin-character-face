@@ -1,4 +1,4 @@
-# 스토어판 (Connect IQ 스토어 공개용): 오리지널 캐릭터 모찌만
+# 스토어판 (Connect IQ 스토어 공개용): 모찌 + 도롱이, 앱 이름 Mochi Pixel
 #   monkeyc -f store.jungle ...   (build.ps1 -Store)
 project.manifest = manifest-store.xml
 base.sourcePath = source;source-store
