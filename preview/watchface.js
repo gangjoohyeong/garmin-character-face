@@ -126,7 +126,8 @@
       dc.setColor(color, TRANSPARENT); Pix.koDate(dc, month, day, dow, x, y, sd, sh, true);
     },
     drawTime(dc, h, m, cx, y, s, colon, leadingZero) {
-      const x = cx - T(27 * s / 2);
+      let x = cx - T(27 * s / 2);
+      if (h < 10 && !leadingZero) x -= 3 * s;
       if (h >= 10 || leadingZero) Pix.drawBigDigit(dc, T(h / 10), x, y, s);
       Pix.drawBigDigit(dc, h % 10, x + 6 * s, y, s);
       if (colon) { dc.fillRectangle(x + 13 * s, y + 2 * s, s, s); dc.fillRectangle(x + 13 * s, y + 4 * s, s, s); }
@@ -339,17 +340,6 @@
       else {
         Pix.disc(dc, 288, 148, 18, 4);
         dc.setColor(sky[3], TRANSPARENT); Pix.disc(dc, 298, 140, 16, 4);
-        for (let i = 0; i < STARS.length / 2; i++) {
-          if (anim && (sec + i * 3) % 7 === 0) continue;
-          const sx = STARS[i * 2], sy = STARS[i * 2 + 1];
-          dc.setColor(i % 3 === 0 ? 0xFFF2B0 : 0xFFFFFF, TRANSPARENT);
-          if (i % 4 === 0) { dc.fillRectangle(sx - 2, sy - 6, 4, 12); dc.fillRectangle(sx - 6, sy - 2, 12, 4); }
-          else dc.fillRectangle(sx - 2, sy - 2, 4, 4);
-        }
-      }
-      if (scene !== 3) {
-        dc.setColor(CLOUD[scene], TRANSPARENT);
-        cloud((st.min * 3 + 40) % 440 - 60, 128); cloud((st.min * 2 + 250) % 440 - 60, 186);
       }
       dc.setColor(grass[0], TRANSPARENT); Pix.disc(dc, 70, 268, 64, 4); Pix.disc(dc, 300, 276, 76, 4);
       dc.setColor(grass[2], TRANSPARENT); dc.fillRectangle(0, groundY, W, H - groundY);
@@ -359,6 +349,19 @@
       for (let i = 0; i < 14; i++) {
         const gx = (i * 53 + 17) % 360, gy = groundY + 20 + (i * 29) % 90;
         dc.fillRectangle(gx, gy, 4, 8); dc.fillRectangle(gx + 6, gy + 2, 4, 6);
+      }
+      // 여기까지 고정 배경 (워치에서는 버퍼 비트맵에 캐시) / 아래는 매번 그림
+      if (scene === 3) {
+        for (let i = 0; i < STARS.length / 2; i++) {
+          if (anim && (sec + i * 3) % 7 === 0) continue;
+          const sx = STARS[i * 2], sy = STARS[i * 2 + 1];
+          dc.setColor(i % 3 === 0 ? 0xFFF2B0 : 0xFFFFFF, TRANSPARENT);
+          if (i % 4 === 0) { dc.fillRectangle(sx - 2, sy - 6, 4, 12); dc.fillRectangle(sx - 6, sy - 2, 12, 4); }
+          else dc.fillRectangle(sx - 2, sy - 2, 4, 4);
+        }
+      } else {
+        dc.setColor(CLOUD[scene], TRANSPARENT);
+        cloud((st.min * 3 + 40) % 440 - 60, 128); cloud((st.min * 2 + 250) % 440 - 60, 186);
       }
     }
     function cloud(x, y) { dc.fillRectangle(x + 12, y, 20, 8); dc.fillRectangle(x + 4, y + 8, 44, 8); dc.fillRectangle(x, y + 16, 56, 8); }
@@ -378,15 +381,15 @@
       if (fb > 0.01) { dc.setColor(st.bat <= 20 ? 0xFF5252 : 0x7CFC8A, TRANSPARENT); dc.drawArc(cx, 180, r, 'cw', 240, 240 - T(120 * fb)); }
       dc.setPenWidth(1);
       if (st.showDate) {
-        if (korean) Pix.drawKoDate(dc, st.month + 1, st.date, st.dow, cx, 45, 2, 2, 0xBBBBBB, -1);
-        else { dc.setColor(0xBBBBBB, TRANSPARENT); dc.drawText(cx, 56, 'TINY', DAYS_MED[st.dow] + ' ' + st.date + ' ' + MONTHS_MED[st.month]); }
+        if (korean) Pix.drawKoDate(dc, st.month + 1, st.date, st.dow, cx, 38, 3, 2, 0xCCCCCC, -1);
+        else { dc.setColor(0xBBBBBB, TRANSPARENT); dc.drawText(cx, 50, 'TINY', DAYS_MED[st.dow] + ' ' + st.date + ' ' + MONTHS_MED[st.month]); }
       }
-      const h = displayHour(st.hour), timeY = st.showDate ? 118 : 108;
+      const h = displayHour(st.hour), timeY = st.showDate ? 112 : 104;
       dc.setColor(st.timeColor === 1 ? accent : 0xFFFFFF, TRANSPARENT);
       dc.drawText(cx, timeY, 'NUMBER_HOT', (st.is24 ? fmt2(h) : String(h)) + ':' + fmt2(st.min));
       if (!st.is24) { dc.setColor(accent, TRANSPARENT); dc.drawText(cx + 124, timeY - 26, 'XTINY', st.hour < 12 ? 'AM' : 'PM'); }
 
-      const s = charScale(ci, [3, 4, 5], 100);
+      const s = charScale(ci, [3, 4, 5], 110);
       const head = drawChar(ci, frame, cx, 256, s, bob, flicker, -1);
       if (frame === FRAME_SLEEP) drawZzz(head[0], head[1], sec, anim, accent, false);
 
@@ -417,6 +420,8 @@
       const a = m * Math.PI / 30;
       dc.setColor(0x888888, TRANSPARENT);
       dc.fillRectangle(T(180 + 158 * Math.sin(a)) - 2, T(180 - 158 * Math.cos(a)) - 2, 4, 4);
+      dc.setColor(0, TRANSPARENT);
+      for (let y = m % 2; y < H; y += 2) dc.fillRectangle(0, y, W, 1);
     }
   }
 

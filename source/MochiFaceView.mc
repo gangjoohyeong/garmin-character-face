@@ -44,6 +44,10 @@ class MochiFaceView extends WatchUi.WatchFace {
     private var _dist as Float = 0.0;   // km 또는 mi
     private var _sec as Number = 0;
 
+    // 픽셀 배경 캐시
+    private var _bgRef as BufferedBitmapReference or Null = null;
+    private var _bgScene as Number = -99;
+
     // 에셋 비트맵 캐시 (한 장만 들고 있음)
     private var _bmpId as ResourceId or Null = null;
     private var _bmp as BitmapResource or Null = null;
@@ -376,6 +380,69 @@ class MochiFaceView extends WatchUi.WatchFace {
             dc.clear();
             return;
         }
+        var bg = sceneBitmap(scene);
+        if (bg != null) {
+            dc.drawBitmap(0, 0, bg);
+        } else {
+            drawSceneStatic(dc, scene);
+        }
+        var ox = _ox;
+        var oy = _oy;
+
+        if (scene == 3) {
+            // 별 (반짝임)
+            for (var i = 0; i < _stars.size() / 2; i++) {
+                if (anim && ((clock.sec + i * 3) % 7) == 0) {
+                    continue;
+                }
+                var sx = _stars[i * 2] + ox;
+                var sy = _stars[i * 2 + 1] + oy;
+                dc.setColor(i % 3 == 0 ? 0xFFF2B0 : 0xFFFFFF, Graphics.COLOR_TRANSPARENT);
+                if (i % 4 == 0) {
+                    dc.fillRectangle(sx - 2, sy - 6, 4, 12);
+                    dc.fillRectangle(sx - 6, sy - 2, 12, 4);
+                } else {
+                    dc.fillRectangle(sx - 2, sy - 2, 4, 4);
+                }
+            }
+        } else {
+            // 구름 (분 단위로 천천히 이동)
+            dc.setColor(_cloud[scene], Graphics.COLOR_TRANSPARENT);
+            drawCloud(dc, ((clock.min * 3 + 40) % 440) - 60 + ox, 128 + oy);
+            drawCloud(dc, ((clock.min * 2 + 250) % 440) - 60 + ox, 186 + oy);
+        }
+    }
+
+    // 고정 배경 캐시 (API 4.0+ 버퍼 비트맵, 장면별 16색 팔레트로 메모리 절약)
+    // 그래픽 풀이 비트맵을 비우면 get() 이 null → 다시 만든다. 지원 안 하면 null (직접 그림).
+    private function sceneBitmap(scene as Number) as BufferedBitmap or Null {
+        if (!(Graphics has :createBufferedBitmap)) {
+            return null;
+        }
+        var bmp = null;
+        if (_bgRef != null && _bgScene == scene) {
+            bmp = (_bgRef as BufferedBitmapReference).get();
+        }
+        if (bmp == null) {
+            var pal = [] as Array<Number>;
+            pal.addAll(_sky[scene] as Array<Number>);
+            pal.addAll(_grass[scene] as Array<Number>);
+            pal.add(_sunColor[scene]);
+            pal.add(0x000000);
+            _bgRef = Graphics.createBufferedBitmap({:width => _w, :height => _h, :palette => pal});
+            _bgScene = scene;
+            bmp = (_bgRef as BufferedBitmapReference).get();
+            if (bmp == null) {
+                _bgRef = null;
+                return null;
+            }
+            drawSceneStatic((bmp as BufferedBitmap).getDc(), scene);
+        }
+        return bmp as BufferedBitmap;
+    }
+
+    // 변하지 않는 배경 (하늘, 해/달, 언덕, 땅) - 버퍼 비트맵에 한 번만 그림
+    private function drawSceneStatic(dc as Dc, scene as Number) as Void {
         var ox = _ox;
         var oy = _oy;
         var sky = _sky[scene] as Array;
@@ -399,7 +466,7 @@ class MochiFaceView extends WatchUi.WatchFace {
             }
         }
 
-        // 해 / 달 / 별
+        // 해 / 달
         dc.setColor(_sunColor[scene], Graphics.COLOR_TRANSPARENT);
         if (scene == 0) {
             Pix.disc(dc, 78 + ox, 196 + oy, 22, 4);
@@ -415,28 +482,6 @@ class MochiFaceView extends WatchUi.WatchFace {
             Pix.disc(dc, 288 + ox, 148 + oy, 18, 4);
             dc.setColor(sky[3] as Number, Graphics.COLOR_TRANSPARENT);
             Pix.disc(dc, 298 + ox, 140 + oy, 16, 4);
-            // 별 (반짝임)
-            for (var i = 0; i < _stars.size() / 2; i++) {
-                if (anim && ((clock.sec + i * 3) % 7) == 0) {
-                    continue;
-                }
-                var sx = _stars[i * 2] + ox;
-                var sy = _stars[i * 2 + 1] + oy;
-                dc.setColor(i % 3 == 0 ? 0xFFF2B0 : 0xFFFFFF, Graphics.COLOR_TRANSPARENT);
-                if (i % 4 == 0) {
-                    dc.fillRectangle(sx - 2, sy - 6, 4, 12);
-                    dc.fillRectangle(sx - 6, sy - 2, 12, 4);
-                } else {
-                    dc.fillRectangle(sx - 2, sy - 2, 4, 4);
-                }
-            }
-        }
-
-        // 구름 (분 단위로 천천히 이동)
-        if (scene != 3) {
-            dc.setColor(_cloud[scene], Graphics.COLOR_TRANSPARENT);
-            drawCloud(dc, ((clock.min * 3 + 40) % 440) - 60 + ox, 128 + oy);
-            drawCloud(dc, ((clock.min * 2 + 250) % 440) - 60 + ox, 186 + oy);
         }
 
         // 먼 언덕
@@ -587,7 +632,7 @@ class MochiFaceView extends WatchUi.WatchFace {
                 if (dc has :setAntiAlias) {
                     dc.setAntiAlias(false);
                 }
-                Pix.drawKoDate(dc, info.month as Number, info.day as Number, dow, cx, 45 + oy, 2, 2, 0xBBBBBB, -1);
+                Pix.drawKoDate(dc, info.month as Number, info.day as Number, dow, cx, 38 + oy, 3, 2, 0xCCCCCC, -1);
                 if (dc has :setAntiAlias) {
                     dc.setAntiAlias(true);
                 }
@@ -595,7 +640,7 @@ class MochiFaceView extends WatchUi.WatchFace {
                 var date = _daysMed[dow] + " " + (info.day as Number).format("%d") + " "
                            + _monthsMed[(info.month as Number) - 1];
                 dc.setColor(0xBBBBBB, Graphics.COLOR_TRANSPARENT);
-                dc.drawText(cx, 56 + oy, Graphics.FONT_TINY, date,
+                dc.drawText(cx, 50 + oy, Graphics.FONT_TINY, date,
                             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             }
         }
@@ -605,7 +650,7 @@ class MochiFaceView extends WatchUi.WatchFace {
         var h = displayHour(clock.hour);
         var hs = is24 ? h.format("%02d") : h.format("%d");
         var time = hs + ":" + clock.min.format("%02d");
-        var timeY = Settings.showDate ? 118 : 108;
+        var timeY = Settings.showDate ? 112 : 104;
         dc.setColor(Settings.get(Settings.TIME_COLOR) == 1 ? accent : 0xFFFFFF, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, timeY + oy, Graphics.FONT_NUMBER_HOT, time,
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
@@ -620,7 +665,7 @@ class MochiFaceView extends WatchUi.WatchFace {
         }
 
         // 캐릭터
-        var s = charScale(ci, [3, 4, 5] as Array<Number>, 100);
+        var s = charScale(ci, [3, 4, 5] as Array<Number>, 110);
         var head = drawChar(dc, ci, frame, cx, 256 + oy, s, bob, flicker, -1);
         if (frame == FRAME_SLEEP) {
             drawZzz(dc, head[0], head[1], clock.sec, anim, accent, false);
@@ -694,6 +739,15 @@ class MochiFaceView extends WatchUi.WatchFace {
         var py = (180 + _oy - 158 * Math.cos(a)).toNumber();
         dc.setColor(0x888888, Graphics.COLOR_TRANSPARENT);
         dc.fillRectangle(px - 2, py - 2, 4, 4);
+
+        // 번인 방지 줄 마스크: 매분 짝/홀 줄을 번갈아 끔
+        // → 어떤 픽셀도 2분 연속 켜지지 않고, 켜진 픽셀 수도 절반
+        dc.setColor(0x000000, Graphics.COLOR_TRANSPARENT);
+        var y = m % 2;
+        while (y < _h) {
+            dc.fillRectangle(0, y, _w, 1);
+            y += 2;
+        }
     }
 
     // =====================================================================

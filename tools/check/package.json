@@ -2,9 +2,10 @@
   "name": "pixel-pals-checks",
   "private": true,
   "type": "module",
-  "description": "SDK 없이 돌리는 Monkey C 문법 검사",
+  "description": "SDK 없이 돌리는 검사: Monkey C 문법(lint), 설정 조합 렌더링·AOD 점검(matrix, Playwright 필요)",
   "scripts": {
-    "lint": "node lint_mc.mjs ../../source"
+    "lint": "node lint_mc.mjs ../../source",
+    "matrix": "node render_matrix.mjs"
   },
   "devDependencies": {
     "@markw65/prettier-plugin-monkeyc": "1.0.69",

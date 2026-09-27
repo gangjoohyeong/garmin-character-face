@@ -175,6 +175,9 @@ module Pix {
     function drawTime(dc as Dc, h as Number, m as Number, cx as Number, y as Number,
                       s as Number, colon as Boolean, leadingZero as Boolean) as Void {
         var x = cx - timeWidth(s) / 2;
+        if (h < 10 && !leadingZero) {
+            x -= 3 * s;   // 시가 한 자리면 가운데로
+        }
         if (h >= 10 || leadingZero) {
             drawBigDigit(dc, h / 10, x, y, s);
         }
