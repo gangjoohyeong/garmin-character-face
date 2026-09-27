@@ -35,12 +35,14 @@ module Settings {
     const DATA_DISTANCE = 6;
     const DATA_FLOORS = 7;
     const DATA_STRESS = 8;
+    const DATA_TEMP = 9;
+    const DATA_NOTIF = 10;
 
     const CHARACTER_COUNT = 4;   // 실제 캐릭터 수 (랜덤 제외)
 
     var KEYS as Array<String> = ["Style", "Character", "CharStyle", "CharSize", "Background", "Accent",
         "TimeColor", "Ring", "Slot1", "Slot2", "Slot3", "Slot4", "SleepAt", "WakeAt", "DateLang"] as Array<String>;
-    var COUNTS as Array<Number> = [2, 5, 3, 3, 6, 7, 2, 5, 9, 9, 9, 9, 5, 5, 3] as Array<Number>;
+    var COUNTS as Array<Number> = [2, 5, 3, 3, 6, 7, 2, 5, 11, 11, 11, 11, 5, 5, 3] as Array<Number>;
     var DEFAULTS as Array<Number> = [0, 0, 0, 1, 0, 0, 0, 0, 1, 4, 2, 3, 2, 1, 0] as Array<Number>;
     var SLEEP_HOURS as Array<Number> = [21, 22, 23, 0, 1] as Array<Number>;
     var WAKE_HOURS as Array<Number> = [5, 6, 7, 8, 9] as Array<Number>;
@@ -48,6 +50,7 @@ module Settings {
     var vals as Array<Number> = [0, 0, 0, 1, 0, 0, 0, 0, 1, 4, 2, 3, 2, 1, 0] as Array<Number>;
     var showDate as Boolean = true;
     var animate as Boolean = true;
+    var weatherFx as Boolean = true;
 
     function load() as Void {
         for (var i = 0; i < LIST_COUNT; i++) {
@@ -56,6 +59,7 @@ module Settings {
         }
         showDate = getBool("ShowDate", true);
         animate = getBool("Animate", true);
+        weatherFx = getBool("WeatherFx", true);
     }
 
     function get(i as Number) as Number {
@@ -70,6 +74,11 @@ module Settings {
     function setShowDate(v as Boolean) as Void {
         showDate = v;
         setVal("ShowDate", v);
+    }
+
+    function setWeatherFx(v as Boolean) as Void {
+        weatherFx = v;
+        setVal("WeatherFx", v);
     }
 
     function setAnimate(v as Boolean) as Void {
@@ -153,7 +162,8 @@ module Settings {
         // 정보 칸
         return [Rez.Strings.DataNone, Rez.Strings.DataHR, Rez.Strings.DataBB, Rez.Strings.DataSteps,
                 Rez.Strings.DataBattery, Rez.Strings.DataCalories, Rez.Strings.DataDistance,
-                Rez.Strings.DataFloors, Rez.Strings.DataStress] as Array<ResourceId>;
+                Rez.Strings.DataFloors, Rez.Strings.DataStress, Rez.Strings.DataTemp,
+                Rez.Strings.DataNotif] as Array<ResourceId>;
     }
 
     function label(i as Number) as ResourceId {

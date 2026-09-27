@@ -18,7 +18,7 @@
     <string id="SizeM">보통</string>
     <string id="SizeL">크게</string>
     <string id="BgTitle">배경</string>
-    <string id="BgAuto">자동(시간대)</string>
+    <string id="BgAuto">자동(일출·일몰)</string>
     <string id="BgMorning">아침</string>
     <string id="BgDay">낮</string>
     <string id="BgEvening">저녁</string>
@@ -69,4 +69,7 @@
     <string id="LangAuto">워치 언어 따라감</string>
     <string id="LangEng">English</string>
     <string id="LangKor">한국어</string>
+    <string id="DataTemp">기온</string>
+    <string id="DataNotif">알림</string>
+    <string id="WeatherTitle">날씨 효과</string>
 </strings>

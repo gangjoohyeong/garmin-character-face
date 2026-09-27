@@ -7,6 +7,7 @@ import Toybox.SensorHistory;
 import Toybox.System;
 import Toybox.Time;
 import Toybox.Time.Gregorian;
+import Toybox.Weather;
 import Toybox.WatchUi;
 
 // 모든 좌표는 360x360 기준으로 설계하고 (_ox, _oy) 만큼 옮겨 그린다.
@@ -17,6 +18,7 @@ class MochiFaceView extends WatchUi.WatchFace {
     const FRAME_BLINK = 1;
     const FRAME_YAWN = 2;
     const FRAME_SLEEP = 3;
+    const FRAME_HAPPY = 4;   // 걸음 목표 달성
 
     // 장면(배경) : 0 아침, 1 낮, 2 저녁, 3 밤, -1 심플
     const SCENE_SIMPLE = -1;
@@ -44,9 +46,25 @@ class MochiFaceView extends WatchUi.WatchFace {
     private var _dist as Float = 0.0;   // km 또는 mi
     private var _sec as Number = 0;
 
+    // 날씨 / 일출·일몰 / 달
+    private var _wx as Number = -1;          // -1 모름, 0 맑음, 1 흐림, 2 비, 3 눈
+    private var _temp as Number or Null = null;
+    private var _notif as Number = 0;
+    private var _wxMin as Number = -1;
+    private var _sunrise as Number = -1;     // 하루 중 분 (모르면 -1)
+    private var _sunset as Number = -1;
+    private var _sunDay as Number = -1;
+    private var _moon as Number = 0;         // 0 삭 ~ 4 보름 ~ 7
+
+    // 날씨 상태 코드 분류 (Toybox.Weather.CONDITION_* 값)
+    private var _wxRain as Array<Number> = [3, 6, 10, 11, 12, 13, 14, 15, 24, 25, 26, 27, 28, 31, 36, 41, 42, 45, 49] as Array<Number>;
+    private var _wxSnow as Array<Number> = [4, 7, 16, 17, 18, 19, 21, 34, 43, 44, 46, 47, 48, 50, 51] as Array<Number>;
+    private var _wxCloud as Array<Number> = [1, 2, 5, 8, 9, 20, 22, 29, 30, 33, 35, 37, 38, 39, 52] as Array<Number>;
+
     // 픽셀 배경 캐시
     private var _bgRef as BufferedBitmapReference or Null = null;
     private var _bgScene as Number = -99;
+    private var _bgMoon as Number = -1;
 
     // 에셋 비트맵 캐시 (한 장만 들고 있음)
     private var _bmpId as ResourceId or Null = null;
@@ -135,7 +153,8 @@ class MochiFaceView extends WatchUi.WatchFace {
         }
 
         readStats();
-        var scene = sceneFor(clock.hour);
+        readWeather(clock);
+        var scene = sceneFor(clock);
         var anim = Settings.animate && !_lowPower;
         var sec = clock.sec;
 
@@ -156,6 +175,9 @@ class MochiFaceView extends WatchUi.WatchFace {
             if ((sec % 2) == 1) {
                 bob = -3;
             }
+        }
+        if (frame == FRAME_OPEN && _steps >= _goal) {
+            frame = FRAME_HAPPY;
         }
         var flicker = anim && (sec % 2) == 1;
 
@@ -178,10 +200,27 @@ class MochiFaceView extends WatchUi.WatchFace {
         return 3;
     }
 
-    private function sceneFor(hour as Number) as Number {
+    // 일출·일몰을 알면 그 기준, 모르면 고정 시각
+    //   아침: 일출 30분 전 ~ 3시간 후 / 낮: ~ 일몰 1시간 전 / 저녁: 일몰 ±1시간 / 밤: 나머지
+    private function periodNow(clock as System.ClockTime) as Number {
+        var mins = clock.hour * 60 + clock.min;
+        if (_sunrise >= 0 && _sunset - _sunrise > 240) {
+            if (mins >= _sunrise - 30 && mins < _sunrise + 180) {
+                return 0;
+            } else if (mins >= _sunrise + 180 && mins < _sunset - 60) {
+                return 1;
+            } else if (mins >= _sunset - 60 && mins < _sunset + 60) {
+                return 2;
+            }
+            return 3;
+        }
+        return periodFor(clock.hour);
+    }
+
+    private function sceneFor(clock as System.ClockTime) as Number {
         var bg = Settings.get(Settings.BACKGROUND);
         if (bg == 0) {
-            return periodFor(hour);
+            return periodNow(clock);
         }
         if (bg == 5) {
             return SCENE_SIMPLE;
@@ -287,6 +326,13 @@ class MochiFaceView extends WatchUi.WatchFace {
             return [Pix.ICON_STAIRS, 0xBA68C8, numText(_floors)];
         } else if (t == Settings.DATA_STRESS) {
             return [Pix.ICON_WAVE, 0xFFB74D, numText(_stress)];
+        } else if (t == Settings.DATA_TEMP) {
+            var k = _wx < 0 ? 0 : _wx;
+            var icons = [Pix.ICON_SUN, Pix.ICON_CLOUD, Pix.ICON_RAIN, Pix.ICON_SNOW];
+            var colors = [0xFFD23F, 0xB0BEC5, 0x64B5F6, 0xFFFFFF];
+            return [icons[k], colors[k], _temp == null ? "--" : (_temp as Number).format("%d") + "°"];
+        } else if (t == Settings.DATA_NOTIF) {
+            return [Pix.ICON_BELL, 0xFFB74D, _notif.format("%d")];
         }
         return null;
     }
@@ -411,6 +457,7 @@ class MochiFaceView extends WatchUi.WatchFace {
             drawCloud(dc, ((clock.min * 3 + 40) % 440) - 60 + ox, 128 + oy);
             drawCloud(dc, ((clock.min * 2 + 250) % 440) - 60 + ox, 186 + oy);
         }
+        drawWeatherFx(dc, clock, anim, 240, true, scene == 3);
     }
 
     // 고정 배경 캐시 (API 4.0+ 버퍼 비트맵, 장면별 16색 팔레트로 메모리 절약)
@@ -420,7 +467,7 @@ class MochiFaceView extends WatchUi.WatchFace {
             return null;
         }
         var bmp = null;
-        if (_bgRef != null && _bgScene == scene) {
+        if (_bgRef != null && _bgScene == scene && _bgMoon == _moon) {
             bmp = (_bgRef as BufferedBitmapReference).get();
         }
         if (bmp == null) {
@@ -431,6 +478,7 @@ class MochiFaceView extends WatchUi.WatchFace {
             pal.add(0x000000);
             _bgRef = Graphics.createBufferedBitmap({:width => _w, :height => _h, :palette => pal});
             _bgScene = scene;
+            _bgMoon = _moon;
             bmp = (_bgRef as BufferedBitmapReference).get();
             if (bmp == null) {
                 _bgRef = null;
@@ -479,9 +527,7 @@ class MochiFaceView extends WatchUi.WatchFace {
         } else if (scene == 2) {
             Pix.disc(dc, 270 + ox, 244 + oy, 28, 4);
         } else {
-            Pix.disc(dc, 288 + ox, 148 + oy, 18, 4);
-            dc.setColor(sky[3] as Number, Graphics.COLOR_TRANSPARENT);
-            Pix.disc(dc, 298 + ox, 140 + oy, 16, 4);
+            drawMoon(dc, 288 + ox, 148 + oy, 18, sky[3] as Number);
         }
 
         // 먼 언덕
@@ -506,6 +552,63 @@ class MochiFaceView extends WatchUi.WatchFace {
             var gy = groundY + 20 + (i * 29) % 90;
             dc.fillRectangle(gx, gy, 4, 8);
             dc.fillRectangle(gx + 6, gy + 2, 4, 6);
+        }
+    }
+
+    // 달의 위상 (0 삭, 1~3 차오름: 오른쪽 밝음, 4 보름, 5~7 기욺: 왼쪽 밝음)
+    private function drawMoon(dc as Dc, x as Number, y as Number, r as Number, skyColor as Number) as Void {
+        var p = _moon;
+        if (p == 0) {
+            dc.setColor(0x3A4478, Graphics.COLOR_TRANSPARENT);
+            Pix.disc(dc, x, y, r, 4);
+            return;
+        }
+        dc.setColor(_sunColor[3], Graphics.COLOR_TRANSPARENT);
+        Pix.disc(dc, x, y, r, 4);
+        if (p == 4) {
+            return;
+        }
+        var waxing = p < 4;
+        var q = waxing ? p : 8 - p;      // 1 초승/그믐, 2 반달, 3 볼록
+        dc.setColor(skyColor, Graphics.COLOR_TRANSPARENT);
+        if (q == 2) {
+            dc.fillRectangle(waxing ? x - r - 4 : x, y - r - 4, r + 4, 2 * r + 8);
+        } else {
+            var off = q == 1 ? r * 6 / 10 : r * 3 / 2;
+            Pix.disc(dc, waxing ? x - off : x + off, y, r, 4);
+        }
+    }
+
+    // 비 / 눈 / 흐림 효과. bottom = 효과를 그릴 아래 한계 (360 기준)
+    private function drawWeatherFx(dc as Dc, clock as System.ClockTime, anim as Boolean, bottom as Number,
+                                   pixel as Boolean, night as Boolean) as Void {
+        if (!Settings.weatherFx || _wx < 1) {
+            return;
+        }
+        var t = anim ? clock.sec : 0;
+        var ox = _ox;
+        var oy = _oy;
+        if (_wx == 1) {
+            if (pixel) {
+                dc.setColor(night ? 0x39426B : 0xDCE3EA, Graphics.COLOR_TRANSPARENT);
+                drawCloud(dc, ((clock.min * 4 + 150) % 440) - 60 + ox, 96 + oy);
+                drawCloud(dc, ((clock.min * 3 + 330) % 440) - 60 + ox, 160 + oy);
+            }
+        } else if (_wx == 2) {
+            dc.setColor(pixel ? 0xCFE3FF : 0x5A7BA8, Graphics.COLOR_TRANSPARENT);
+            for (var i = 0; i < 18; i++) {
+                var x = (i * 47 + 13) % 360 + ox;
+                var y = (i * 53 + t * 24) % bottom + oy;
+                dc.fillRectangle(x, y, 2, 8);
+            }
+        } else {
+            dc.setColor(pixel ? 0xFFFFFF : 0x9AA4B5, Graphics.COLOR_TRANSPARENT);
+            var sz = pixel ? 4 : 3;
+            for (var i = 0; i < 16; i++) {
+                var x = (i * 61 + 29 + (t % 2) * 2) % 360 + ox;
+                var y = (i * 37 + t * 8) % bottom + oy;
+                dc.fillRectangle(x, y, sz, sz);
+            }
         }
     }
 
@@ -595,6 +698,7 @@ class MochiFaceView extends WatchUi.WatchFace {
         // 아래쪽 행성 언덕
         dc.setColor(_digHill[ti], Graphics.COLOR_TRANSPARENT);
         dc.fillCircle(cx, 440 + oy, 200);
+        drawWeatherFx(dc, clock, anim, 250, false, ti == 3);
 
         if (dc has :setAntiAlias) {
             dc.setAntiAlias(true);
@@ -799,6 +903,76 @@ class MochiFaceView extends WatchUi.WatchFace {
                 _stress = lastSample(SensorHistory.getStressHistory({:period => 1}));
             }
         }
+    }
+
+    // 날씨는 1분에 한 번만 읽음. 일출·일몰은 하루에 한 번 계산.
+    private function readWeather(clock as System.ClockTime) as Void {
+        var n = System.getDeviceSettings().notificationCount;
+        _notif = n != null ? n as Number : 0;
+        if (_wxMin == clock.min) {
+            return;
+        }
+        _wxMin = clock.min;
+        _moon = moonPhase();
+        if (!(Toybox has :Weather)) {
+            return;
+        }
+        var cc = Weather.getCurrentConditions();
+        if (cc == null) {
+            _wx = -1;
+            _temp = null;
+            return;
+        }
+        _wx = wxCategory(cc.condition);
+        _temp = null;
+        if (cc.temperature != null) {
+            var tc = (cc.temperature as Numeric).toFloat();
+            if (System.getDeviceSettings().temperatureUnits == System.UNIT_STATUTE) {
+                tc = tc * 9.0 / 5.0 + 32.0;
+            }
+            _temp = (tc >= 0 ? tc + 0.5 : tc - 0.5).toNumber();
+        }
+        var day = Time.now().value() / 86400;
+        if (_sunDay != day && (Weather has :getSunrise)) {
+            var loc = cc.observationLocationPosition;
+            if (loc != null) {
+                var now = Time.now();
+                var sr = Weather.getSunrise(loc, now);
+                var ss = Weather.getSunset(loc, now);
+                if (sr != null && ss != null) {
+                    _sunrise = minuteOfDay(sr);
+                    _sunset = minuteOfDay(ss);
+                    _sunDay = day;
+                }
+            }
+        }
+    }
+
+    private function wxCategory(c as Number or Null) as Number {
+        if (c == null) {
+            return -1;
+        }
+        if (_wxRain.indexOf(c) >= 0) {
+            return 2;
+        } else if (_wxSnow.indexOf(c) >= 0) {
+            return 3;
+        } else if (_wxCloud.indexOf(c) >= 0) {
+            return 1;
+        }
+        return 0;
+    }
+
+    private function minuteOfDay(m as Time.Moment) as Number {
+        var i = Gregorian.info(m, Time.FORMAT_SHORT);
+        return (i.hour as Number) * 60 + (i.min as Number);
+    }
+
+    // 달의 위상 0~7 (2000-01-06 18:14 UTC 삭 기준, 삭망월 29.53일)
+    private function moonPhase() as Number {
+        var days = (Time.now().value() - 947182440) / 86400.0;
+        var p = days / 29.530588853;
+        p = p - Math.floor(p);
+        return ((p * 8 + 0.5).toNumber()) % 8;
     }
 
     private function lastSample(it) as Number or Null {

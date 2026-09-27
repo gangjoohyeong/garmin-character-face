@@ -112,6 +112,12 @@
           <button data-t="450">아침 7:30</button><button data-t="780">낮 13:00</button>
           <button data-t="1110">저녁 18:30</button><button data-t="1420">밤 23:40</button>
         </div>
+        <div class="field"><span class="label">날씨 (예시)</span>
+          <div class="seg" id="wx">
+            <button data-v="-1">정보 없음</button><button data-v="0" aria-pressed="true">맑음</button><button data-v="1">흐림</button>
+            <button data-v="2">비</button><button data-v="3">눈</button>
+          </div>
+        </div>
         <div class="sliders">
           <div class="row"><span>시각</span><input type="range" id="time" min="0" max="1439" value="780"><output id="timeOut"></output></div>
           <div class="row"><span>심박</span><input type="range" id="hr" min="40" max="190" value="68"><output id="hrOut"></output></div>
@@ -122,8 +128,10 @@
           <div class="row"><span>거리 (km)</span><input type="range" id="dist" min="0" max="300" value="48"><output id="distOut"></output></div>
           <div class="row"><span>오른 층수</span><input type="range" id="floors" min="0" max="60" value="7"><output id="floorsOut"></output></div>
           <div class="row"><span>스트레스</span><input type="range" id="stress" min="0" max="100" value="27"><output id="stressOut"></output></div>
+          <div class="row"><span>기온</span><input type="range" id="temp" min="-15" max="38" value="22"><output id="tempOut"></output></div>
+          <div class="row"><span>알림</span><input type="range" id="notif" min="0" max="30" value="3"><output id="notifOut"></output></div>
         </div>
-        <p class="note">센서 값은 예시입니다. 걸음 목표는 10,000보로 가정합니다.</p>
+        <p class="note">센서 값은 예시입니다. 걸음 목표는 10,000보로 가정하며, 목표를 넘으면 캐릭터가 웃는 표정이 됩니다. 일출 6:20, 일몰 18:50으로 가정합니다.</p>
       </section>
     </div>
   </div>
@@ -141,7 +149,7 @@
 <script>
 (function () {
   const $ = id => document.getElementById(id);
-  const DATA = ['없음', '심박', 'Body Battery', '걸음', '배터리', '칼로리', '거리', '오른 층수', '스트레스'];
+  const DATA = ['없음', '심박', 'Body Battery', '걸음', '배터리', '칼로리', '거리', '오른 층수', '스트레스', '기온', '알림'];
   const NAMES = ['모찌', '꼬부기', '파이리', '도롱이'];
   const STYLE_NAMES = ['픽셀아트', '디지털'];
   const ACCENT_HEX = [null, '#FF9BB3', '#4FC3F7', '#FF8A50', '#64E3B4', '#B39DDB', '#FFD23F'];
@@ -152,7 +160,7 @@
     { card: 'cardLook', key: 'character', label: '캐릭터', items: [...NAMES, '매일 랜덤'] },
     { card: 'cardLook', key: 'charStyle', label: '캐릭터 스타일', items: ['워치페이스 따라감', '픽셀아트', '디지털'] },
     { card: 'cardLook', key: 'charSize', label: '캐릭터 크기', items: ['작게', '보통', '크게'], def: 1 },
-    { card: 'cardLook', key: 'background', label: '배경', items: ['자동(시간대)', '아침', '낮', '저녁', '밤', '심플(검정)'] },
+    { card: 'cardLook', key: 'background', label: '배경', items: ['자동(일출·일몰)', '아침', '낮', '저녁', '밤', '심플(검정)'] },
     { card: 'cardLook', key: 'accent', label: '강조색', items: ['자동', '핑크', '하늘', '주황', '민트', '보라', '노랑'], swatch: ACCENT_HEX },
     { card: 'cardLook', key: 'timeColor', label: '시각 색상', items: ['흰색', '강조색'] },
     { card: 'cardInfo', key: 'ring', label: '바깥 링', items: ['걸음', '배터리', 'Body Battery', '초', '끄기'] },
@@ -160,7 +168,7 @@
     { card: 'cardMotion', key: 'sleepAt', label: '캐릭터 취침 시각', items: ['21:00', '22:00', '23:00', '0:00', '1:00'], def: 2 },
     { card: 'cardMotion', key: 'wakeAt', label: '캐릭터 기상 시각', items: ['5:00', '6:00', '7:00', '8:00', '9:00'], def: 1 },
   ];
-  const state = { slots: [1, 4, 2, 3], showDate: true, animate: true };
+  const state = { slots: [1, 4, 2, 3], showDate: true, animate: true, weatherFx: true };
   OPTIONS.forEach(o => { state[o.key] = o.def || 0; });
 
   function buildSeg(o) {
@@ -189,6 +197,7 @@
     $(card).insertBefore(wrap, $(card).children[1]);
   }
   addToggle('cardInfo', 'showDate', '날짜 표시', 'showDate');
+  addToggle('cardMotion', 'weatherFx', '날씨 효과', 'weatherFx');
   addToggle('cardMotion', 'animate', '애니메이션', 'animate');
 
   // 정보 칸 1~4
@@ -218,11 +227,18 @@
   }
   const mainCtx = setupCanvas($('watch'));
 
+  let wxState = 0;
+  $('wx').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    wxState = +b.dataset.v;
+    $('wx').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    draw();
+  });
   $('presets').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     $('live').checked = false; $('time').value = b.dataset.t; draw();
   });
-  ['aod', 'is24', 'watchKorean', 'live', 'hr', 'bat', 'bb', 'steps', 'cal', 'dist', 'floors', 'stress'].forEach(id => $(id).addEventListener('input', draw));
+  ['aod', 'is24', 'watchKorean', 'live', 'hr', 'bat', 'bb', 'steps', 'cal', 'dist', 'floors', 'stress', 'temp', 'notif'].forEach(id => $(id).addEventListener('input', draw));
   $('time').addEventListener('input', () => { $('live').checked = false; draw(); });
 
   function snapshot() {
@@ -238,6 +254,8 @@
       day: Math.floor(now.getTime() / 86400000),
       hr: +$('hr').value, bat: +$('bat').value, bb: +$('bb').value, steps: +$('steps').value, goal: 10000,
       cal: +$('cal').value, dist: +$('dist').value / 10, floors: +$('floors').value, stress: +$('stress').value,
+      wx: wxState, temp: wxState < 0 ? null : +$('temp').value, notif: +$('notif').value,
+      sunrise: 380, sunset: 1130, nowSec: Math.floor(now.getTime() / 1000),
     });
   }
 
@@ -274,6 +292,8 @@
     $('distOut').textContent = st.dist.toFixed(1);
     $('floorsOut').textContent = st.floors;
     $('stressOut').textContent = st.stress;
+    $('tempOut').textContent = st.temp == null ? '--' : st.temp + '°';
+    $('notifOut').textContent = st.notif;
     const who = st.character < 4 ? NAMES[st.character] : NAMES[st.day % 4] + ' (랜덤)';
     const cs = st.charStyle === 0 ? STYLE_NAMES[st.style] : STYLE_NAMES[st.charStyle - 1];
     $('readout').textContent = STYLE_NAMES[st.style] + ' · ' + who + ' (' + cs + ')' + (st.aod ? ' · AOD' : '');

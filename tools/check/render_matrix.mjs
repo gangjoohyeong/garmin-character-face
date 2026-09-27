@@ -27,6 +27,7 @@ const result = await page.evaluate(() => {
     slots: [1, 4, 2, 3], showDate: true, dateLang: 2, watchKorean: true, sleepAt: 2, wakeAt: 1,
     animate: false, aod: false, is24: true, hour: 13, min: 58, sec: 30, dow: 6, date: 27, month: 8, day: 0,
     hr: 128, bat: 100, bb: 100, steps: 12345, goal: 10000, cal: 2888, dist: 12.3, floors: 18, stress: 88,
+    wx: 0, temp: -12, notif: 28, sunrise: 380, sunset: 1130, nowSec: 1790000000, weatherFx: true,
   };
   const cv = document.createElement('canvas'); cv.width = 360; cv.height = 360;
   const ctx = cv.getContext('2d', { willReadFrequently: true });
@@ -98,6 +99,18 @@ const result = await page.evaluate(() => {
         st: { style, background, is24, hour: 21, dateLang: background % 2 ? 1 : 2, character: background % 4, showDate: background !== 4 } });
     sheet('sheet-style' + style + '-backgrounds', list2);
   }
+  // 날씨 / 달의 위상 / 새 정보 칸
+  const wxList = [];
+  for (const style of [0, 1]) for (const wx of [-1, 1, 2, 3]) {
+    wxList.push({ label: `s${style} wx${wx} day`, st: { style, wx, hour: 13, animate: true, sec: 7, slots: [9, 10, 1, 9], character: 1 } });
+    wxList.push({ label: `s${style} wx${wx} night`, st: { style, wx, hour: 21, animate: true, sec: 7, slots: [9, 10, 1, 9], character: 2 } });
+  }
+  sheet('sheet-weather', wxList);
+  const moonList = [];
+  for (let k = 0; k < 8; k++) moonList.push({ label: `moon ${k}/8`, st: { hour: 21, nowSec: 947182440 + Math.round(k * 29.530588853 / 8 * 86400), steps: 100 } });
+  moonList.push({ label: 'happy (goal met)', st: { hour: 13, steps: 12000, character: 0 } });
+  moonList.push({ label: 'happy digital', st: { hour: 13, steps: 12000, character: 3, charStyle: 2 } });
+  sheet('sheet-moon-happy', moonList);
   return { aod, sheets, calls };
 });
 

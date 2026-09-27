@@ -12,6 +12,11 @@ module Pix {
     const ICON_PIN = 5;
     const ICON_STAIRS = 6;
     const ICON_WAVE = 7;
+    const ICON_SUN = 8;
+    const ICON_CLOUD = 9;
+    const ICON_RAIN = 10;
+    const ICON_SNOW = 11;
+    const ICON_BELL = 12;
 
     // 런 배열 그리기. override >= 0 이면 외곽선(팔레트 1)만 해당 색으로 그림 (AOD용)
     function drawRuns(dc as Dc, runs as Array, pal as Array, x as Number, y as Number,

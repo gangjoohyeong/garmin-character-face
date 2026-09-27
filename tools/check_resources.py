@@ -161,6 +161,12 @@ def main():
             if n != counts[i]:
                 err("미리보기 %s 선택지 %d개 != COUNTS %d" % (jk, n, counts[i]))
 
+    dm = re.search(r"const DATA = \[(.*?)\];", html)
+    if dm and "Slot1" in keys:
+        n = len(re.findall(r"'[^']*'", dm.group(1)))
+        if n != counts[keys.index("Slot1")]:
+            err("미리보기 정보 칸 선택지 %d개 != COUNTS %d" % (n, counts[keys.index("Slot1")]))
+
     # ---- 6. 스프라이트 ----
     sp = read("source/Sprites.mc")
     for w in re.findall(r"var W as Array<Number> = \[(.*?)\]", sp):

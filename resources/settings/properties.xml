@@ -16,4 +16,5 @@
     <property id="DateLang" type="number">0</property>
     <property id="ShowDate" type="boolean">true</property>
     <property id="Animate" type="boolean">true</property>
+    <property id="WeatherFx" type="boolean">true</property>
 </properties>

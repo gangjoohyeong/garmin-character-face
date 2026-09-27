@@ -141,7 +141,7 @@
       }
     },
   };
-  const ICON = { HEART: 0, BOLT: 1, STEPS: 2, BATT: 3, FLAME: 4, PIN: 5, STAIRS: 6, WAVE: 7 };
+  const ICON = { HEART: 0, BOLT: 1, STEPS: 2, BATT: 3, FLAME: 4, PIN: 5, STAIRS: 6, WAVE: 7, SUN: 8, CLOUD: 9, RAIN: 10, SNOW: 11, BELL: 12 };
 
   // ---- Smooth 모듈 (벡터 캐릭터) ----
   const Smooth = {
@@ -194,7 +194,12 @@
   const DAYS_MED = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const MONTHS_MED = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const SLEEP_HOURS = [21, 22, 23, 0, 1], WAKE_HOURS = [5, 6, 7, 8, 9];
-  const FRAME_OPEN = 0, FRAME_BLINK = 1, FRAME_YAWN = 2, FRAME_SLEEP = 3, SCENE_SIMPLE = -1;
+  const FRAME_OPEN = 0, FRAME_BLINK = 1, FRAME_YAWN = 2, FRAME_SLEEP = 3, FRAME_HAPPY = 4, SCENE_SIMPLE = -1;
+  const ICON_WX = [8, 9, 10, 11], WX_COLORS = [0xFFD23F, 0xB0BEC5, 0x64B5F6, 0xFFFFFF];
+  function moonPhase(nowSec) {
+    let p = (nowSec - 947182440) / 86400 / 29.530588853; p -= Math.floor(p);
+    return T(p * 8 + 0.5) % 8;
+  }
   const CHARACTER_COUNT = 4;
 
   const RING = [];
@@ -247,6 +252,8 @@
         case 6: return [ICON.PIN, 0x9CCC65, st.dist.toFixed(1)];
         case 7: return [ICON.STAIRS, 0xBA68C8, numText(st.floors)];
         case 8: return [ICON.WAVE, 0xFFB74D, numText(st.stress)];
+        case 9: { const k = st.wx < 0 ? 0 : st.wx; return [ICON_WX[k], WX_COLORS[k], st.temp == null ? '--' : st.temp + '°']; }
+        case 10: return [ICON.BELL, 0xFFB74D, String(st.notif)];
       }
       return null;
     }
@@ -270,7 +277,42 @@
 
     if (st.aod) return drawAod();
 
-    const scene = st.background === 0 ? periodFor(st.hour) : st.background === 5 ? SCENE_SIMPLE : st.background - 1;
+    function periodNow() {
+      const mins = st.hour * 60 + st.min, sr = st.sunrise, ss = st.sunset;
+      if (sr >= 0 && ss - sr > 240) {
+        if (mins >= sr - 30 && mins < sr + 180) return 0;
+        if (mins >= sr + 180 && mins < ss - 60) return 1;
+        if (mins >= ss - 60 && mins < ss + 60) return 2;
+        return 3;
+      }
+      return periodFor(st.hour);
+    }
+    const moon = moonPhase(st.nowSec);
+    function drawMoon(x, y, r, skyColor) {
+      const p = moon;
+      if (p === 0) { dc.setColor(0x3A4478, TRANSPARENT); Pix.disc(dc, x, y, r, 4); return; }
+      dc.setColor(SUN[3], TRANSPARENT); Pix.disc(dc, x, y, r, 4);
+      if (p === 4) return;
+      const waxing = p < 4, q = waxing ? p : 8 - p;
+      dc.setColor(skyColor, TRANSPARENT);
+      if (q === 2) dc.fillRectangle(waxing ? x - r - 4 : x, y - r - 4, r + 4, 2 * r + 8);
+      else { const off = q === 1 ? T(r * 6 / 10) : T(r * 3 / 2); Pix.disc(dc, waxing ? x - off : x + off, y, r, 4); }
+    }
+    function drawWeatherFx(bottom, pixel, night) {
+      if (!st.weatherFx || st.wx < 1) return;
+      const t = anim ? sec : 0;
+      if (st.wx === 1) {
+        if (pixel) { dc.setColor(night ? 0x39426B : 0xDCE3EA, TRANSPARENT); cloud((st.min * 4 + 150) % 440 - 60, 96); cloud((st.min * 3 + 330) % 440 - 60, 160); }
+      } else if (st.wx === 2) {
+        dc.setColor(pixel ? 0xCFE3FF : 0x5A7BA8, TRANSPARENT);
+        for (let i = 0; i < 18; i++) dc.fillRectangle((i * 47 + 13) % 360, (i * 53 + t * 24) % bottom, 2, 8);
+      } else {
+        dc.setColor(pixel ? 0xFFFFFF : 0x9AA4B5, TRANSPARENT);
+        const sz = pixel ? 4 : 3;
+        for (let i = 0; i < 16; i++) dc.fillRectangle((i * 61 + 29 + (t % 2) * 2) % 360, (i * 37 + t * 8) % bottom, sz, sz);
+      }
+    }
+    const scene = st.background === 0 ? periodNow() : st.background === 5 ? SCENE_SIMPLE : st.background - 1;
     const anim = st.animate, sec = st.sec;
     let frame = FRAME_OPEN, bob = 0;
     if (isSleepHour(st.hour)) { frame = FRAME_SLEEP; if (anim && sec % 4 < 2) bob = 2; }
@@ -279,6 +321,7 @@
       else if (sec % 5 === 4) frame = FRAME_BLINK;
       if (sec % 2 === 1) bob = -3;
     }
+    if (frame === FRAME_OPEN && st.steps >= st.goal) frame = FRAME_HAPPY;
     const flicker = anim && sec % 2 === 1;
     if (st.style === 0) pixelFace(); else digitalFace();
     return;
@@ -338,8 +381,7 @@
         dc.fillRectangle(290, 116, 4, 8); dc.fillRectangle(290, 176, 4, 8); dc.fillRectangle(258, 148, 8, 4); dc.fillRectangle(318, 148, 8, 4);
       } else if (scene === 2) Pix.disc(dc, 270, 244, 28, 4);
       else {
-        Pix.disc(dc, 288, 148, 18, 4);
-        dc.setColor(sky[3], TRANSPARENT); Pix.disc(dc, 298, 140, 16, 4);
+        drawMoon(288, 148, 18, sky[3]);
       }
       dc.setColor(grass[0], TRANSPARENT); Pix.disc(dc, 70, 268, 64, 4); Pix.disc(dc, 300, 276, 76, 4);
       dc.setColor(grass[2], TRANSPARENT); dc.fillRectangle(0, groundY, W, H - groundY);
@@ -363,6 +405,7 @@
         dc.setColor(CLOUD[scene], TRANSPARENT);
         cloud((st.min * 3 + 40) % 440 - 60, 128); cloud((st.min * 2 + 250) % 440 - 60, 186);
       }
+      drawWeatherFx(240, true, scene === 3);
     }
     function cloud(x, y) { dc.fillRectangle(x + 12, y, 20, 8); dc.fillRectangle(x + 4, y + 8, 44, 8); dc.fillRectangle(x, y + 16, 56, 8); }
 
@@ -370,6 +413,7 @@
       const cx = 180, ti = scene === SCENE_SIMPLE ? 4 : scene, accent = accentColor(DIG_ACCENT[ti]);
       dc.setColor(DIG_BG[ti], DIG_BG[ti]); dc.clear();
       dc.setColor(DIG_HILL[ti], TRANSPARENT); dc.fillCircle(cx, 440, 200);
+      drawWeatherFx(250, false, ti === 3);
       const r = 170;
       dc.setPenWidth(8); dc.setColor(0x333842, TRANSPARENT); dc.drawArc(cx, 180, r, 'cw', 240, 120);
       const ring = ringInfo(accent);

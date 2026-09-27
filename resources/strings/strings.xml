@@ -18,7 +18,7 @@
     <string id="SizeM">Medium</string>
     <string id="SizeL">Large</string>
     <string id="BgTitle">Background</string>
-    <string id="BgAuto">Auto (time of day)</string>
+    <string id="BgAuto">Auto (sunrise/sunset)</string>
     <string id="BgMorning">Morning</string>
     <string id="BgDay">Day</string>
     <string id="BgEvening">Evening</string>
@@ -69,4 +69,7 @@
     <string id="LangAuto">Watch language</string>
     <string id="LangEng">English</string>
     <string id="LangKor">한국어</string>
+    <string id="DataTemp">Temperature</string>
+    <string id="DataNotif">Notifications</string>
+    <string id="WeatherTitle">Weather effects</string>
 </strings>

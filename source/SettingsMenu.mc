@@ -18,6 +18,7 @@ class SettingsMenu extends WatchUi.Menu2 {
         addItem(new WatchUi.MenuItem(Settings.title(Settings.DATE_LANG), Settings.label(Settings.DATE_LANG),
                                      Settings.DATE_LANG, null));
         addItem(new WatchUi.ToggleMenuItem(Rez.Strings.AnimTitle, null, :animate, Settings.animate, null));
+        addItem(new WatchUi.ToggleMenuItem(Rez.Strings.WeatherTitle, null, :weatherFx, Settings.weatherFx, null));
         addItem(new WatchUi.MenuItem(Settings.title(Settings.SLEEP_AT), Settings.label(Settings.SLEEP_AT),
                                      Settings.SLEEP_AT, null));
         addItem(new WatchUi.MenuItem(Settings.title(Settings.WAKE_AT), Settings.label(Settings.WAKE_AT),
@@ -34,6 +35,9 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
         var id = item.getId();
         if (id == :showDate) {
             Settings.setShowDate((item as ToggleMenuItem).isEnabled());
+            WatchUi.requestUpdate();
+        } else if (id == :weatherFx) {
+            Settings.setWeatherFx((item as ToggleMenuItem).isEnabled());
             WatchUi.requestUpdate();
         } else if (id == :animate) {
             Settings.setAnimate((item as ToggleMenuItem).isEnabled());

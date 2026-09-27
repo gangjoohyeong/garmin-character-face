@@ -75,6 +75,8 @@
             <listEntry value="6">@Strings.DataDistance</listEntry>
             <listEntry value="7">@Strings.DataFloors</listEntry>
             <listEntry value="8">@Strings.DataStress</listEntry>
+            <listEntry value="9">@Strings.DataTemp</listEntry>
+            <listEntry value="10">@Strings.DataNotif</listEntry>
         </settingConfig>
     </setting>
     <setting propertyKey="@Properties.Slot2" title="@Strings.Slot2Title">
@@ -88,6 +90,8 @@
             <listEntry value="6">@Strings.DataDistance</listEntry>
             <listEntry value="7">@Strings.DataFloors</listEntry>
             <listEntry value="8">@Strings.DataStress</listEntry>
+            <listEntry value="9">@Strings.DataTemp</listEntry>
+            <listEntry value="10">@Strings.DataNotif</listEntry>
         </settingConfig>
     </setting>
     <setting propertyKey="@Properties.Slot3" title="@Strings.Slot3Title">
@@ -101,6 +105,8 @@
             <listEntry value="6">@Strings.DataDistance</listEntry>
             <listEntry value="7">@Strings.DataFloors</listEntry>
             <listEntry value="8">@Strings.DataStress</listEntry>
+            <listEntry value="9">@Strings.DataTemp</listEntry>
+            <listEntry value="10">@Strings.DataNotif</listEntry>
         </settingConfig>
     </setting>
     <setting propertyKey="@Properties.Slot4" title="@Strings.Slot4Title">
@@ -114,6 +120,8 @@
             <listEntry value="6">@Strings.DataDistance</listEntry>
             <listEntry value="7">@Strings.DataFloors</listEntry>
             <listEntry value="8">@Strings.DataStress</listEntry>
+            <listEntry value="9">@Strings.DataTemp</listEntry>
+            <listEntry value="10">@Strings.DataNotif</listEntry>
         </settingConfig>
     </setting>
     <setting propertyKey="@Properties.ShowDate" title="@Strings.DateTitle">
@@ -127,6 +135,9 @@
         </settingConfig>
     </setting>
     <setting propertyKey="@Properties.Animate" title="@Strings.AnimTitle">
+        <settingConfig type="boolean" />
+    </setting>
+    <setting propertyKey="@Properties.WeatherFx" title="@Strings.WeatherTitle">
         <settingConfig type="boolean" />
     </setting>
     <setting propertyKey="@Properties.SleepAt" title="@Strings.SleepTitle">
