@@ -20,9 +20,11 @@
       const c = this.ctx; c.strokeStyle = this.hex(this.fg); c.lineWidth = this.pen; c.lineCap = 'butt';
       c.beginPath(); c.arc(x, y, r, -a0 * Math.PI / 180, -a1 * Math.PI / 180, dir === 'ccw'); c.stroke();
     }
-    drawText(x, y, font, text) {
+    drawText(x, y, font, text, align) {
       const c = this.ctx; c.fillStyle = this.hex(this.fg);
-      c.font = FONTS[font]; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(text, x, y);
+      c.font = FONTS[font]; c.textAlign = align || 'center'; c.textBaseline = 'middle'; c.fillText(text, x, y);
+    }
+    getTextWidthInPixels(text, font) { this.ctx.font = FONTS[font]; return Math.round(this.ctx.measureText(text).width);
     }
   }
   // FR265S 시스템 폰트 대략치
@@ -347,6 +349,7 @@
   const DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
   const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
   const DAYS_MED = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const DAYS_KO = ['일', '월', '화', '수', '목', '금', '토'];
   const MONTHS_MED = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const SLEEP_HOURS = [21, 22, 23, 0, 1], WAKE_HOURS = [5, 6, 7, 8, 9];
   const FRAME_OPEN = 0, FRAME_BLINK = 1, FRAME_YAWN = 2, FRAME_SLEEP = 3, FRAME_HAPPY = 4, SCENE_SIMPLE = -1;
@@ -428,6 +431,23 @@
         if (big) Pix.drawTextShadow(dc, 'Z', hx + dx[i], hy + dy[i], sizes[i], color, 0x2B2B3A);
         else { dc.setColor(color, TRANSPARENT); Pix.drawText(dc, 'Z', hx + dx[i], hy + dy[i], sizes[i]); }
       }
+    }
+
+    // 디지털 날짜 줄 (MochiFaceView.drawDigitalDate 와 같음)
+    function drawDigitalDate(cx, y, color, ampm, ampmColor) {
+      const month = st.month + 1, day = st.date, dow = st.dow;
+      let date = null, pixelKo = false;
+      if (st.showDate) {
+        if (korean) { if (st.watchKorean) date = month + '월 ' + day + '일 (' + DAYS_KO[dow] + ')'; else pixelKo = true; }
+        else date = DAYS_MED[dow] + ' ' + day + ' ' + MONTHS_MED[month - 1];
+      }
+      const wd = date ? dc.getTextWidthInPixels(date, 'TINY') : (pixelKo ? Pix.koDate(dc, month, day, dow, 0, 0, 3, 2, false) : 0);
+      const wa = ampm ? dc.getTextWidthInPixels(ampm, 'XTINY') : 0;
+      const gap = (wd > 0 && wa > 0) ? 10 : 0;
+      const x = cx - T((wd + gap + wa) / 2);
+      if (date) { dc.setColor(color, TRANSPARENT); dc.drawText(x, y, 'TINY', date, 'left'); }
+      else if (pixelKo) { dc.setColor(color, TRANSPARENT); Pix.koDate(dc, month, day, dow, x, y - 10, 3, 2, true); }
+      if (ampm) { dc.setColor(ampmColor, TRANSPARENT); dc.drawText(x + wd + gap, y, 'XTINY', ampm, 'left'); }
     }
 
     if (st.aod) return drawAod();
@@ -595,14 +615,10 @@
       const fb = st.bat / 100;
       if (fb > 0.01) { dc.setColor(st.bat <= 20 ? 0xFF5252 : 0x7CFC8A, TRANSPARENT); dc.drawArc(cx, 180, r, 'cw', 240, 240 - T(120 * fb)); }
       dc.setPenWidth(1);
-      if (st.showDate) {
-        if (korean) Pix.drawKoDate(dc, st.month + 1, st.date, st.dow, cx, 38, 3, 2, 0xCCCCCC, -1);
-        else { dc.setColor(0xBBBBBB, TRANSPARENT); dc.drawText(cx, 50, 'TINY', DAYS_MED[st.dow] + ' ' + st.date + ' ' + MONTHS_MED[st.month]); }
-      }
+      drawDigitalDate(cx, 50, 0xBBBBBB, st.is24 ? null : (st.hour < 12 ? 'AM' : 'PM'), accent);
       const h = displayHour(st.hour), timeY = st.showDate ? 112 : 104;
       dc.setColor(st.timeColor === 1 ? accent : 0xFFFFFF, TRANSPARENT);
       dc.drawText(cx, timeY, 'NUMBER_HOT', (st.is24 ? fmt2(h) : String(h)) + ':' + fmt2(st.min));
-      if (!st.is24) { dc.setColor(accent, TRANSPARENT); dc.drawText(cx + 124, timeY - 26, 'XTINY', st.hour < 12 ? 'AM' : 'PM'); }
 
       const s = charScale(ci, [3, 4, 5], 110);
       const head = drawChar(ci, frame, cx, 256, s, bob, flicker, -1);
@@ -625,12 +641,19 @@
       dc.setColor(0, 0); dc.clear();
       const m = st.min, dx = (m % 5 - 2) * 4, dy = (T(m / 5) % 5 - 2) * 4;
       const cx = 180 + dx, oy = dy, h = displayHour(st.hour);
-      if (st.showDate) {
-        if (korean) Pix.drawKoDate(dc, 0, st.date, st.dow, cx, 70 + oy, 2, 2, 0x777777, -1);
-        else { const date = DAYS[st.dow] + ' ' + st.date; dc.setColor(0x777777, TRANSPARENT); Pix.drawText(dc, date, cx - T(Pix.textWidth(date, 2) / 2), 78 + oy, 2); }
+      const ampm = st.is24 ? null : (st.hour < 12 ? 'AM' : 'PM');
+      if (st.style === 0) {
+        if (st.showDate) {
+          if (korean) Pix.drawKoDate(dc, st.month + 1, st.date, st.dow, cx, 30 + oy, 3, 2, 0x777777, -1);
+          else { const date = DAYS[st.dow] + ' ' + st.date + ' ' + MONTHS[st.month]; dc.setColor(0x777777, TRANSPARENT); Pix.drawText(dc, date, cx - T(Pix.textWidth(date, 3) / 2), 34 + oy, 3); }
+        }
+        const timeY = st.showDate ? 60 : 50;
+        dc.setColor(0xAAAAAA, TRANSPARENT); Pix.drawTime(dc, h, m, cx, timeY + oy, 7, true, st.is24);
+        if (ampm) { dc.setColor(0x777777, TRANSPARENT); Pix.drawText(dc, ampm, cx + 110 - T(Pix.textWidth(ampm, 2) / 2), timeY + 4 + oy, 2); }
+      } else {
+        drawDigitalDate(cx, 50 + oy, 0x777777, ampm, 0x777777);
+        dc.setColor(0xAAAAAA, TRANSPARENT); dc.drawText(cx, (st.showDate ? 112 : 104) + oy, 'NUMBER_HOT', (st.is24 ? fmt2(h) : String(h)) + ':' + fmt2(m));
       }
-      if (st.style === 0) { dc.setColor(0xAAAAAA, TRANSPARENT); Pix.drawTime(dc, h, m, cx, 100 + oy, 5, true, st.is24); }
-      else { dc.setColor(0xAAAAAA, TRANSPARENT); dc.drawText(cx, 124 + oy, 'NUMBER_MEDIUM', (st.is24 ? fmt2(h) : String(h)) + ':' + fmt2(m)); }
       drawChar(ci, FRAME_SLEEP, cx, 256 + oy, 3, 0, false, 0x5A5A5A);
       const a = m * Math.PI / 30;
       dc.setColor(0x888888, TRANSPARENT);

@@ -110,6 +110,7 @@ class MochiFaceView extends WatchUi.WatchFace {
     private var _months as Array<String> = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
                                             "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"] as Array<String>;
     private var _daysMed as Array<String> = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as Array<String>;
+    private var _daysKo as Array<String> = ["일", "월", "화", "수", "목", "금", "토"] as Array<String>;
     private var _monthsMed as Array<String> = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
                                                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as Array<String>;
 
@@ -779,29 +780,11 @@ class MochiFaceView extends WatchUi.WatchFace {
         }
         dc.setPenWidth(1);
 
-        // 날짜 (영어: 시스템 글꼴 / 한글: 픽셀 한글)
-        if (Settings.showDate) {
-            var info = Gregorian.info(Time.now(), Time.FORMAT_SHORT);
-            var dow = (info.day_of_week as Number) - 1;
-            if (Settings.koreanDate()) {
-                if (dc has :setAntiAlias) {
-                    dc.setAntiAlias(false);
-                }
-                Pix.drawKoDate(dc, info.month as Number, info.day as Number, dow, cx, 38 + oy, 3, 2, 0xCCCCCC, -1);
-                if (dc has :setAntiAlias) {
-                    dc.setAntiAlias(true);
-                }
-            } else {
-                var date = _daysMed[dow] + " " + (info.day as Number).format("%d") + " "
-                           + _monthsMed[(info.month as Number) - 1];
-                dc.setColor(0xBBBBBB, Graphics.COLOR_TRANSPARENT);
-                dc.drawText(cx, 50 + oy, Graphics.FONT_TINY, date,
-                            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-            }
-        }
+        // 날짜 + AM/PM (한 줄, 게이지와 겹치지 않게)
+        var is24 = System.getDeviceSettings().is24Hour;
+        drawDigitalDate(dc, cx, 50 + oy, 0xBBBBBB, is24 ? null : (clock.hour < 12 ? "AM" : "PM"), accent);
 
         // 시각
-        var is24 = System.getDeviceSettings().is24Hour;
         var h = displayHour(clock.hour);
         var hs = is24 ? h.format("%02d") : h.format("%d");
         var time = hs + ":" + clock.min.format("%02d");
@@ -809,11 +792,6 @@ class MochiFaceView extends WatchUi.WatchFace {
         dc.setColor(Settings.get(Settings.TIME_COLOR) == 1 ? accent : 0xFFFFFF, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, timeY + oy, Graphics.FONT_NUMBER_HOT, time,
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        if (!is24) {
-            dc.setColor(accent, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx + 124, timeY - 26 + oy, Graphics.FONT_XTINY, clock.hour < 12 ? "AM" : "PM",
-                        Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        }
 
         if (dc has :setAntiAlias) {
             dc.setAntiAlias(false);
@@ -849,6 +827,52 @@ class MochiFaceView extends WatchUi.WatchFace {
         }
     }
 
+    // 디지털 스타일 날짜 줄. y = 줄 가운데. ampm 이 있으면 날짜 뒤에 붙임 (날짜를 끄면 AM/PM 만)
+    //   한국어: 시스템 글꼴 "9월 27일 (토)". 워치 언어가 한국어가 아니면 시스템 글꼴에 한글이 없을 수
+    //   있어 픽셀 한글로 대신 그림.
+    private function drawDigitalDate(dc as Dc, cx as Number, y as Number, color as Number,
+                                     ampm as String or Null, ampmColor as Number) as Void {
+        var info = Gregorian.info(Time.now(), Time.FORMAT_SHORT);
+        var dow = (info.day_of_week as Number) - 1;
+        var month = info.month as Number;
+        var day = info.day as Number;
+        var date = null;
+        var pixelKo = false;
+        if (Settings.showDate) {
+            if (Settings.koreanDate()) {
+                if (System.getDeviceSettings().systemLanguage == System.LANGUAGE_KOR) {
+                    date = month.format("%d") + "월 " + day.format("%d") + "일 (" + _daysKo[dow] + ")";
+                } else {
+                    pixelKo = true;
+                }
+            } else {
+                date = _daysMed[dow] + " " + day.format("%d") + " " + _monthsMed[month - 1];
+            }
+        }
+        var font = Graphics.FONT_TINY;
+        var left = Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER;
+        var wd = 0;
+        if (date != null) {
+            wd = dc.getTextWidthInPixels(date as String, font);
+        } else if (pixelKo) {
+            wd = Pix.koDate(dc, month, day, dow, 0, 0, 3, 2, false);
+        }
+        var wa = ampm != null ? dc.getTextWidthInPixels(ampm as String, Graphics.FONT_XTINY) : 0;
+        var gap = (wd > 0 && wa > 0) ? 10 : 0;
+        var x = cx - (wd + gap + wa) / 2;
+        if (date != null) {
+            dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(x, y, font, date as String, left);
+        } else if (pixelKo) {
+            dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+            Pix.koDate(dc, month, day, dow, x, y - 10, 3, 2, true);
+        }
+        if (ampm != null) {
+            dc.setColor(ampmColor, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(x + wd + gap, y, Graphics.FONT_XTINY, ampm as String, left);
+        }
+    }
+
     // =====================================================================
     // AOD (항상 켜짐) - 번인 방지: 켜진 픽셀 최소화 + 매분 위치 이동
     // =====================================================================
@@ -863,25 +887,33 @@ class MochiFaceView extends WatchUi.WatchFace {
         var is24 = System.getDeviceSettings().is24Hour;
         var h = displayHour(clock.hour);
 
-        if (Settings.showDate) {
-            var info = Gregorian.info(Time.now(), Time.FORMAT_SHORT);
-            var dow = (info.day_of_week as Number) - 1;
-            if (Settings.koreanDate()) {
-                Pix.drawKoDate(dc, 0, info.day as Number, dow, cx, 70 + oy, 2, 2, 0x777777, -1);
-            } else {
-                var date = _days[dow] + " " + (info.day as Number).format("%d");
-                dc.setColor(0x777777, Graphics.COLOR_TRANSPARENT);
-                Pix.drawText(dc, date, cx - Pix.textWidth(date, 2) / 2, 78 + oy, 2);
-            }
-        }
-
+        // 날짜·시각은 화면이 켜졌을 때와 같은 글꼴·크기·위치 (회색, 위치만 매분 조금씩 이동)
+        var ampm = is24 ? null : (clock.hour < 12 ? "AM" : "PM");
         if (Settings.get(Settings.STYLE) == 0) {
+            if (Settings.showDate) {
+                var info = Gregorian.info(Time.now(), Time.FORMAT_SHORT);
+                var dow = (info.day_of_week as Number) - 1;
+                if (Settings.koreanDate()) {
+                    Pix.drawKoDate(dc, info.month as Number, info.day as Number, dow, cx, 30 + oy, 3, 2, 0x777777, -1);
+                } else {
+                    var date = _days[dow] + " " + (info.day as Number).format("%d") + " "
+                               + _months[(info.month as Number) - 1];
+                    dc.setColor(0x777777, Graphics.COLOR_TRANSPARENT);
+                    Pix.drawText(dc, date, cx - Pix.textWidth(date, 3) / 2, 34 + oy, 3);
+                }
+            }
+            var timeY = Settings.showDate ? 60 : 50;
             dc.setColor(0xAAAAAA, Graphics.COLOR_TRANSPARENT);
-            Pix.drawTime(dc, h, m, cx, 100 + oy, 5, true, is24);
+            Pix.drawTime(dc, h, m, cx, timeY + oy, 7, true, is24);
+            if (ampm != null) {
+                dc.setColor(0x777777, Graphics.COLOR_TRANSPARENT);
+                Pix.drawText(dc, ampm, cx + 110 - Pix.textWidth(ampm, 2) / 2, timeY + 4 + oy, 2);
+            }
         } else {
+            drawDigitalDate(dc, cx, 50 + oy, 0x777777, ampm, 0x777777);
             var hs = is24 ? h.format("%02d") : h.format("%d");
             dc.setColor(0xAAAAAA, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, 124 + oy, Graphics.FONT_NUMBER_MEDIUM, hs + ":" + m.format("%02d"),
+            dc.drawText(cx, (Settings.showDate ? 112 : 104) + oy, Graphics.FONT_NUMBER_HOT, hs + ":" + m.format("%02d"),
                         Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         }
 
