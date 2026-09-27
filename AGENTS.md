@@ -31,7 +31,9 @@ Forerunner 265S/265용 픽셀 캐릭터 워치페이스. Monkey C.
 - CI 결과는 로그인 없이 공개 API로 확인한다: `actions/runs?head_sha=<sha>` → `runs/<id>/jobs` → `check-runs/<job id>/annotations`.
   컴파일 단계가 monkeyc의 ERROR/WARNING 줄과 단계별 "성공"을 annotation으로 남긴다.
 - 스토어 서명: Secret `DEVELOPER_KEY_B64`(사용자 키, `tools/make_key.ps1`로 생성)가 있으면 CI가 그 키로 서명하고
-  `MochiPixel-store-upload` 아티팩트를 올린다. 없으면 임시 키 + 경고. 개인 키를 이 환경에서 만들거나 다루지 않는다.
+  `MochiPixel-store-upload` 아티팩트를 올린다. 없으면 임시 키 + 경고.
+  키는 사용자 요청으로 한 번 만들어 사용자에게 전달했고(원본은 사용자가 보관), 이 환경과 저장소에는 남기지 않는다.
+  새 키를 만들면 스토어 앱 업데이트가 막히므로, 키를 다시 만들지 말고 사용자가 가진 키를 쓴다.
 - 로컬에서 확인 가능한 것: `python3 tools/gen_sprites.py`, `node --check preview/watchface.js`, Playwright로 `preview/index.html` 렌더링.
 - 미리보기 아티팩트: https://claude.ai/artifact/Wind66oE6g2tE6cQ7jFWqY (preview/index.html + sprites.js + watchface.js)
 
