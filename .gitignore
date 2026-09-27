@@ -4,7 +4,7 @@ keys/
 *.iq
 __pycache__/
 # 외부 에셋 (저작권 - 빌드 때 tools/fetch_assets.py 로 생성)
-assets/
+assets/cache/
 resources-full/drawables/
 source-full/Assets.mc
 preview/assets.js

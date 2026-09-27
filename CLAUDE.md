@@ -14,8 +14,8 @@ Forerunner 265S/265용 픽셀 캐릭터 워치페이스. Monkey C.
 - 검사: `python3 tools/check_resources.py`, `cd tools/check && npm ci && npm run lint`(+ source-full, source-store),
   `NODE_PATH=$(npm root -g) node tools/check/render_matrix.mjs` (AOD·겹침), `node tools/check/store_screens.mjs`.
 - 캐릭터: 0 모찌, 1 꼬부기, 2 파이리, 3 도롱이. 픽셀(격자) + 디지털(SMOOTH 벡터 도형) 두 벌이 있다.
-- 디지털 캐릭터 스타일은 `tools/fetch_assets.py`가 만든 비트맵(꼬부기/파이리 = PokeAPI 공식 아트, 도롱이 = `assets/dorongi.png`)을
-  우선 쓰고, 없으면 `Smooth.mc` 벡터로 대체한다. 에셋과 생성물(`source-full/Assets.mc`, `resources-full/drawables/`,
+- 디지털 캐릭터 스타일은 `tools/fetch_assets.py`가 만든 비트맵(꼬부기/파이리 = PokeAPI 공식 아트, 도롱이 = `assets/dorongi.png`, 사용자가 제공·커밋 허락함)을
+  우선 쓰고, 없으면 `Smooth.mc` 벡터로 대체한다. 포켓몬 에셋 캐시(`assets/cache/`)와 생성물(`source-full/Assets.mc`, `resources-full/drawables/`,
   `preview/assets.js`)은 저작권 때문에 커밋하지 않는다 (공개 저장소). 로컬 확인 전 `pip install pillow && python3 tools/fetch_assets.py`.
 - 한글 날짜는 시스템 폰트 대신 `HANGUL` 픽셀 글리프로 그린다 (한글 폰트 없는 모델 대비).
 - 좌표는 360x360 기준으로 설계하고 `_ox/_oy`만큼 옮겨 그린다 (FR265 416px 대응).

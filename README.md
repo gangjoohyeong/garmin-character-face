@@ -100,17 +100,18 @@ PowerShell에서 `garmin-character-face` 폴더로 이동한 뒤:
 | 캐릭터 | 에셋 |
 |---|---|
 | 꼬부기, 파이리 | [PokeAPI 스프라이트](https://github.com/PokeAPI/sprites)의 공식 아트를 자동으로 내려받음 |
-| 도롱이 | `assets/dorongi.png`에 직접 넣은 이미지 (흰 배경은 자동으로 지움) |
+| 도롱이 | `assets/dorongi.png` (저장소에 포함, 흰 배경은 자동으로 지움) |
 | 모찌 | 오리지널이라 벡터 그림 그대로 |
 
 - `tools/fetch_assets.py`가 이미지를 받아 크기별(66/88/110/132px) 비트맵과 AOD용 외곽선을 만듭니다.
   `build.ps1`, `build.sh`, CI가 빌드 전에 자동으로 실행합니다 (Python + Pillow 필요, 없으면 설치 시도).
-- 에셋은 저작권이 있어 **저장소에 커밋하지 않습니다** (`.gitignore`). 이 저장소는 공개 저장소입니다.
+- 포켓몬 공식 아트는 저작권이 있어 **저장소에 커밋하지 않습니다** (`.gitignore`, 빌드 때 내려받음). 이 저장소는 공개 저장소입니다.
+  도롱이 원본 이미지(`assets/dorongi.png`)는 사용자 결정에 따라 저장소에 포함합니다.
 - 에셋을 구하지 못하면(오프라인, 파일 없음) 그 캐릭터는 벡터 그림으로 대신 그려서 빌드는 항상 됩니다.
 - 이미지 에셋은 표정이 하나라 깜빡임·하품은 없고, 들썩임과 수면 중 Zzz만 표시됩니다.
 - VS Code에서 바로 빌드하려면 먼저 `python tools/fetch_assets.py`를 한 번 실행해 `source-full/Assets.mc`를 만드세요.
 
-**도롱이 이미지 넣기:** PC의 저장소 폴더에 `assets` 폴더를 만들고 도롱이 그림을 `dorongi.png`로 저장한 뒤 빌드하세요.
+**도롱이 이미지:** `assets/dorongi.png`(저장소에 포함)를 씁니다. 다른 그림으로 바꾸려면 이 파일을 교체하고 빌드하세요.
 전신이 보이고 배경이 흰색이거나 투명한 이미지면 됩니다.
 
 ## CI 자동 빌드 (GitHub Actions)
