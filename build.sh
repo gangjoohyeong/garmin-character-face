@@ -16,7 +16,9 @@ if [ ! -f "$KEY" ]; then
   openssl pkcs8 -topk8 -inform PEM -outform DER -in keys/developer_key.pem -out "$KEY" -nocrypt
   rm keys/developer_key.pem
 fi
-command -v python3 >/dev/null && python3 tools/gen_sprites.py
+python3 tools/gen_sprites.py
+python3 -c "import PIL" 2>/dev/null || python3 -m pip install --user pillow
+python3 tools/fetch_assets.py
 mkdir -p bin
 "$CIQ_SDK/bin/monkeyc" -f monkey.jungle -d "$DEVICE" -o bin/PixelPals.prg -y "$KEY" -l 0 -w
 echo "완료: bin/PixelPals.prg"

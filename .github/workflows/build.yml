@@ -19,6 +19,8 @@ jobs:
         run: |
           python tools/gen_sprites.py
           git diff --exit-code -- source/Sprites.mc preview/sprites.js
+      - name: 에셋 스크립트 (Pillow 없이 대체 파일 생성)
+        run: python tools/fetch_assets.py && test -f source/Assets.mc
       - name: 미리보기 JS 문법 검사
         run: node --check preview/watchface.js
 
@@ -58,6 +60,17 @@ jobs:
           connect-iq-sdk-manager sdk set "^8"
           connect-iq-sdk-manager device download --manifest=manifest.xml
           echo "$(connect-iq-sdk-manager sdk current-path --bin)" >> "$GITHUB_PATH"
+
+      - uses: actions/setup-python@v5
+        if: steps.secrets.outputs.ok == 'true'
+        with:
+          python-version: "3.12"
+
+      - name: 외부 에셋 받기
+        if: steps.secrets.outputs.ok == 'true'
+        run: |
+          pip install pillow
+          python tools/fetch_assets.py
 
       - name: 컴파일
         if: steps.secrets.outputs.ok == 'true'

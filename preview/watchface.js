@@ -34,6 +34,20 @@
   };
   const T = Math.trunc;
 
+  // 외부 에셋 (preview/assets.js, tools/fetch_assets.py 가 만듦)
+  const ASSETS = {};
+  const AD = window.ASSET_DATA || {};
+  for (const ci of Object.keys(AD)) {
+    const load = uri => { const im = new Image(); im.src = uri; return im; };
+    ASSETS[ci] = { sizes: {}, aod: load(AD[ci].aod) };
+    for (const s of Object.keys(AD[ci].sizes)) ASSETS[ci].sizes[s] = load(AD[ci].sizes[s]);
+  }
+  function assetImage(ci, s, override) {
+    const a = ASSETS[ci]; if (!a) return null;
+    const im = override >= 0 ? (s === 3 ? a.aod : null) : a.sizes[s];
+    return im && im.complete && im.naturalWidth ? im : null;
+  }
+
   // ---- Pix 모듈 ----
   const Pix = {
     drawRuns(dc, runs, pal, x, y, s, override) {
@@ -206,6 +220,8 @@
     function drawChar(ci, frame, cx, baseline, s, bob, flicker, override) {
       if (smooth) {
         const size = s * 22, x = cx - T(size / 2), y = baseline - size;
+        const im = assetImage(ci, s, override);
+        if (im) { dc.ctx.drawImage(im, x, y + bob); return [x + T(size * 3 / 4), y + T(size / 8)]; }
         Smooth.drawCharacter(dc, ci, frame, x, y + bob, size, flicker, override);
         const hd = S.smooth[ci].head;
         return [x + T(hd[1] * size / 100), y + T(hd[0] * size / 100)];

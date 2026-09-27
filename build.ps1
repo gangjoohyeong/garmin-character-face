@@ -44,9 +44,14 @@ if (-not (Test-Path $key)) {
     Write-Host "개발자 키 생성: $key  (잃어버리지 않게 백업하세요)" -ForegroundColor Yellow
 }
 
-# 3) 스프라이트 재생성 (Python 이 있으면)
+# 3) 스프라이트 재생성 + 외부 에셋(포켓몬 공식 아트, assets\dorongi.png) 가공
 if (Get-Command python -ErrorAction SilentlyContinue) {
     python tools\gen_sprites.py
+    python -c "import PIL" 2>$null
+    if ($LASTEXITCODE -ne 0) { python -m pip install --user pillow }
+    python tools\fetch_assets.py
+} elseif (-not (Test-Path (Join-Path $root "source\Assets.mc"))) {
+    Write-Error "Python 이 필요합니다 (source\Assets.mc 생성용). https://www.python.org 에서 설치하세요."
 }
 
 New-Item -ItemType Directory -Force (Join-Path $root "bin") | Out-Null

@@ -44,6 +44,10 @@ class MochiFaceView extends WatchUi.WatchFace {
     private var _dist as Float = 0.0;   // km 또는 mi
     private var _sec as Number = 0;
 
+    // 에셋 비트맵 캐시 (한 장만 들고 있음)
+    private var _bmpId as ResourceId or Null = null;
+    private var _bmp as BitmapResource or Null = null;
+
     // 색 테이블
     private var _sky as Array = [
         [0xF7A8B8, 0xF9B9BE, 0xFBCAC2, 0xFDDCC6, 0xFFE9C9, 0xFFF3D6],   // 아침
@@ -220,6 +224,12 @@ class MochiFaceView extends WatchUi.WatchFace {
             var size = s * 22;
             var x = cx - size / 2;
             var y = baseline - size;
+            // 외부 에셋 비트맵이 있으면 사용 (tools/fetch_assets.py)
+            var rid = override >= 0 ? (s == 3 ? Assets.aod(ci) : null) : Assets.get(ci, s);
+            if (rid != null) {
+                dc.drawBitmap(x, y + bob, bitmap(rid));
+                return [x + size * 3 / 4, y + size / 8] as Array<Number>;
+            }
             Smooth.drawCharacter(dc, ci, frame, x, y + bob, size, flicker, override);
             var head = Sprites.SM_HEAD[ci] as Array<Number>;
             return [x + head[1] * size / 100, y + head[0] * size / 100] as Array<Number>;
@@ -231,6 +241,14 @@ class MochiFaceView extends WatchUi.WatchFace {
         Pix.drawCharacter(dc, ci, frame, px, py + bob, s, flicker, override);
         var hd = Sprites.HEAD[ci] as Array<Number>;
         return [px + hd[1] * s, py + hd[0] * s] as Array<Number>;
+    }
+
+    private function bitmap(rid as ResourceId) as BitmapResource {
+        if (_bmp == null || _bmpId != rid) {
+            _bmp = WatchUi.loadResource(rid) as BitmapResource;
+            _bmpId = rid;
+        }
+        return _bmp as BitmapResource;
     }
 
     // 크기 설정 → 배율 (maxH 를 넘지 않게)
