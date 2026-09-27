@@ -18,7 +18,10 @@ const SHOTS = [
   ['04-pixel-night-sleep', { style: 0, hour: 23, min: 48, sec: 3, animate: true, wx: 3 }],
   ['05-digital', { style: 1, hour: 10, min: 9, accent: 4, dateLang: 1 }],
   ['06-digital-rain', { style: 1, hour: 16, min: 30, wx: 2, charStyle: 1, sec: 5, animate: true, slots: [9, 3, 1, 4] }],
-  ['07-aod', { style: 0, aod: true, hour: 1, min: 12 }],
+  ['07-scenery-sea', { style: 0, hour: 18, min: 20, scenery: 1 }],
+  ['08-scenery-cherry', { style: 0, hour: 10, min: 30, scenery: 4, animate: true, sec: 3 }],
+  ['09-scenery-space', { style: 0, hour: 22, min: 5, scenery: 6, animate: true, sec: 2 }],
+  ['10-aod', { style: 0, aod: true, hour: 1, min: 12 }],
 ];
 
 const browser = await chromium.launch();
@@ -31,7 +34,7 @@ const shots = await page.evaluate((SHOTS) => {
     slots: [1, 4, 2, 3], showDate: true, dateLang: 2, watchKorean: true, sleepAt: 2, wakeAt: 1,
     animate: false, aod: false, is24: true, hour: 13, min: 24, sec: 0, dow: 6, date: 27, month: 8, day: 0,
     hr: 64, bat: 78, bb: 71, steps: 6840, goal: 10000, cal: 1520, dist: 5.1, floors: 6, stress: 24,
-    wx: 0, temp: 21, notif: 2, sunrise: 380, sunset: 1130, nowSec: 1790000000, weatherFx: true,
+    scenery: 0, wx: 0, temp: 21, notif: 2, sunrise: 380, sunset: 1130, nowSec: 1790000000, weatherFx: true,
   };
   const cv = document.createElement('canvas'); cv.width = 360; cv.height = 360;
   const ctx = cv.getContext('2d');

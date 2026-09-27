@@ -27,7 +27,7 @@ const result = await page.evaluate(() => {
     slots: [1, 4, 2, 3], showDate: true, dateLang: 2, watchKorean: true, sleepAt: 2, wakeAt: 1,
     animate: false, aod: false, is24: true, hour: 13, min: 58, sec: 30, dow: 6, date: 27, month: 8, day: 0,
     hr: 128, bat: 100, bb: 100, steps: 12345, goal: 10000, cal: 2888, dist: 12.3, floors: 18, stress: 88,
-    wx: 0, temp: -12, notif: 28, sunrise: 380, sunset: 1130, nowSec: 1790000000, weatherFx: true,
+    scenery: 0, wx: 0, temp: -12, notif: 28, sunrise: 380, sunset: 1130, nowSec: 1790000000, weatherFx: true,
   };
   const cv = document.createElement('canvas'); cv.width = 360; cv.height = 360;
   const ctx = cv.getContext('2d', { willReadFrequently: true });
@@ -111,6 +111,16 @@ const result = await page.evaluate(() => {
   moonList.push({ label: 'happy (goal met)', st: { hour: 13, steps: 12000, character: 0 } });
   moonList.push({ label: 'happy digital', st: { hour: 13, steps: 12000, character: 3, charStyle: 2 } });
   sheet('sheet-moon-happy', moonList);
+  // 풍경 7종 × 시간대 (픽셀) + 디지털
+  const scnList = [];
+  const SN = ['meadow', 'sea', 'city', 'snow', 'cherry', 'autumn', 'space'];
+  for (let scenery = 0; scenery < 7; scenery++) {
+    for (const [hour, tn] of [[7, 'morn'], [13, 'day'], [18, 'eve'], [21, 'night']])
+      scnList.push({ label: `${SN[scenery]} ${tn}`, st: { scenery, hour, character: scenery % 4, animate: true, sec: 5 } });
+    scnList.push({ label: `${SN[scenery]} digital`, st: { scenery, hour: 13, style: 1, character: scenery % 4 } });
+    scnList.push({ label: `${SN[scenery]} dig night`, st: { scenery, hour: 21, style: 1, character: scenery % 4 } });
+  }
+  sheet('sheet-scenery', scnList);
   return { aod, sheets, calls };
 });
 

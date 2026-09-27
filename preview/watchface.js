@@ -175,6 +175,159 @@
     pen(w, k) { const p = T(w * k + 0.5); return p < 1 ? 1 : p; },
   };
 
+
+  // ---- Scenery 모듈 (Scenery.mc 와 동일) ----
+  const Scenery = (() => {
+    const MEADOW = 0, SEA = 1, CITY = 2, SNOW = 3, CHERRY = 4, AUTUMN = 5, SPACE = 6, SEASONAL = 7, HORIZON = 200;
+    const BASE = [[],
+      [0x2E86C1, 0x5DADE2, 0xEAF6FF, 0xF2D9A0, 0xD9B878, 0x8B5E3C, 0x3FA34D, 0x2E7D32],
+      [0x6C7A96, 0x4A5670, 0xFFE08A, 0x5D636E, 0x9AA0AA, 0xF4F4F4, 0xBFD9F2, 0x39435A],
+      [0x8FA3C0, 0x6F84A6, 0xFFFFFF, 0xEEF4FA, 0xC9D8EA, 0x2F6B4F, 0x1F4D38, 0x6B4A2E],
+      [0x7FC96A, 0xA8E08C, 0x5FA84F, 0x7A5238, 0xF8B9CF, 0xFFD9E6, 0xE88AAE, 0xC9E4B8],
+      [0xB5A24E, 0xD1BF6A, 0x8E7E36, 0x6B4630, 0xF08A3C, 0xF7C948, 0xD9482B, 0xC98E5A],
+      [0x0B0B1E, 0x15123A, 0xE0875A, 0xB8623E, 0xF3D5A0, 0x8C8C99, 0x6B6B78, 0x55555F]];
+    const seasonal = m => (m >= 3 && m <= 5) ? CHERRY : (m >= 6 && m <= 8) ? SEA : (m >= 9 && m <= 11) ? AUTUMN : SNOW;
+    function shade(c, scene) {
+      const k = [96, 100, 80, 46][scene];
+      let r = T(((c >> 16) & 255) * k / 100), g = T(((c >> 8) & 255) * k / 100), b = T((c & 255) * k / 100);
+      if (scene === 3) { r += 6; g += 12; b += 34; } else if (scene === 2) { r += 22; b += 6; }
+      return (Math.min(r, 255) << 16) | (Math.min(g, 255) << 8) | Math.min(b, 255);
+    }
+    const colors = (sc, scene) => BASE[sc].map((c, i) => (sc === SPACE || (sc === CITY && i === 2 && scene >= 2)) ? c : shade(c, scene));
+    function tri(dc, cx, baseY, halfW, height, u) {
+      for (let r = 0; r < height; r += u) { const hw = T(T(halfW * (r + u) / height) / u) * u; dc.fillRectangle(cx - hw, baseY - height + r, hw * 2, u); }
+    }
+    function drawSea(dc, c, gy) {
+      const hz = HORIZON;
+      dc.setColor(c[0], TRANSPARENT); dc.fillRectangle(0, hz, 360, gy - hz);
+      dc.setColor(c[1], TRANSPARENT);
+      [4, 14, 26, 38].forEach((ry, i) => { for (let x = (i * 12) % 32; x < 360; x += 32) dc.fillRectangle(x, hz + ry, 12 + i * 2, 2); });
+      dc.setColor(c[3], TRANSPARENT); dc.fillRectangle(0, gy, 360, 360 - gy);
+      dc.setColor(c[2], TRANSPARENT); dc.fillRectangle(0, gy - 2, 360, 4);
+      for (let x = 0; x < 360; x += 20) dc.fillRectangle(x, gy + 2, 8, 2);
+      dc.setColor(c[4], TRANSPARENT);
+      for (let i = 0; i < 16; i++) dc.fillRectangle((i * 53 + 11) % 360, gy + 16 + (i * 31) % 90, 4, 4);
+      const tx = 44;
+      dc.setColor(c[5], TRANSPARENT);
+      for (let i = 0; i < 10; i++) dc.fillRectangle(tx + T(i / 3) * 4, gy - 10 - i * 10, 8, 10);
+      const lx = tx + 16, ly = gy - 108;
+      dc.setColor(c[6], TRANSPARENT);
+      [[lx - 40, ly, 40, 6], [lx - 48, ly + 6, 12, 6], [lx, ly - 6, 38, 6], [lx + 34, ly, 10, 8], [lx - 26, ly - 12, 26, 6],
+       [lx - 4, ly - 16, 8, 10], [lx + 4, ly + 6, 28, 6], [lx + 26, ly + 12, 8, 8]].forEach(r => dc.fillRectangle(...r));
+      dc.setColor(c[7], TRANSPARENT);
+      [[lx - 36, ly + 6, 24, 2], [lx + 8, ly + 12, 16, 2], [lx - 4, ly - 2, 10, 8]].forEach(r => dc.fillRectangle(...r));
+    }
+    function drawCity(dc, c, gy, scene) {
+      const far = [0, 40, 70, 36, 30, 104, 64, 44, 62, 104, 26, 122, 128, 40, 82, 166, 30, 142, 194, 44, 92, 236, 28, 112, 262, 40, 72, 300, 36, 96, 334, 30, 62];
+      const near = [-4, 52, 50, 60, 36, 66, 120, 48, 44, 200, 40, 58, 252, 56, 48, 316, 48, 56];
+      const lit = scene >= 2;
+      for (let i = 0; i < far.length; i += 3) {
+        const bx = far[i], bw = far[i + 1], bh = far[i + 2];
+        dc.setColor(c[0], TRANSPARENT); dc.fillRectangle(bx, gy - bh, bw, bh);
+        dc.setColor(lit ? c[2] : c[6], TRANSPARENT);
+        for (let wy = gy - bh + 8, row = 0; wy < gy - 12; wy += 12, row++)
+          for (let wx = bx + 6, col = 0; wx < bx + bw - 6; wx += 10, col++) if ((row + col + i) % 3 === 0) dc.fillRectangle(wx, wy, 4, 4);
+      }
+      for (let i = 0; i < near.length; i += 3) {
+        dc.setColor(c[1], TRANSPARENT); dc.fillRectangle(near[i], gy - near[i + 2], near[i + 1], near[i + 2]);
+        dc.setColor(c[7], TRANSPARENT); dc.fillRectangle(near[i], gy - near[i + 2], near[i + 1], 4);
+      }
+      dc.setColor(c[3], TRANSPARENT); dc.fillRectangle(0, gy, 360, 360 - gy);
+      dc.setColor(c[4], TRANSPARENT); dc.fillRectangle(0, gy, 360, 12);
+      dc.setColor(c[5], TRANSPARENT); for (let x = 0; x < 360; x += 32) dc.fillRectangle(x, gy + 40, 16, 3);
+    }
+    function drawSnow(dc, c, gy) {
+      const mts = [90, 124, 124, 272, 136, 144];
+      for (let i = 0; i < mts.length; i += 3) {
+        dc.setColor(c[0], TRANSPARENT); tri(dc, mts[i], gy, mts[i + 1], mts[i + 2], 4);
+        const capH = T(mts[i + 2] * 3 / 10);
+        dc.setColor(c[2], TRANSPARENT); tri(dc, mts[i], gy - mts[i + 2] + capH, T(mts[i + 1] * 3 / 10), capH, 4);
+      }
+      dc.setColor(c[1], TRANSPARENT); tri(dc, 196, gy, 100, 84, 4);
+      dc.setColor(c[2], TRANSPARENT); tri(dc, 196, gy - 84 + 20, 24, 20, 4);
+      dc.setColor(c[3], TRANSPARENT); dc.fillRectangle(0, gy, 360, 360 - gy);
+      dc.setColor(c[4], TRANSPARENT); for (let i = 0; i < 16; i++) dc.fillRectangle((i * 47 + 23) % 360, gy + 14 + (i * 37) % 90, 8, 4);
+      [34, 64, 300, 330].forEach((tx, i) => {
+        const by = gy + 8 + (i % 2) * 6;
+        dc.setColor(c[7], TRANSPARENT); dc.fillRectangle(tx - 2, by - 8, 4, 8);
+        dc.setColor(c[5], TRANSPARENT); tri(dc, tx, by - 8, 14, 20, 4); tri(dc, tx, by - 20, 11, 18, 4); tri(dc, tx, by - 32, 8, 14, 4);
+        dc.setColor(c[6], TRANSPARENT); dc.fillRectangle(tx, by - 16, 12, 4);
+        dc.setColor(c[2], TRANSPARENT); dc.fillRectangle(tx - 4, by - 44, 8, 4);
+      });
+    }
+    function drawTrees(dc, c, gy) {
+      dc.setColor(c[7], TRANSPARENT); Pix.disc(dc, 70, 268, 64, 4); Pix.disc(dc, 300, 276, 76, 4);
+      dc.setColor(c[0], TRANSPARENT); dc.fillRectangle(0, gy, 360, 360 - gy);
+      dc.setColor(c[1], TRANSPARENT); dc.fillRectangle(0, gy, 360, 6);
+      dc.setColor(c[2], TRANSPARENT); for (let i = 0; i < 14; i++) dc.fillRectangle((i * 53 + 17) % 360, gy + 20 + (i * 29) % 90, 4, 8);
+      dc.setColor(c[5], TRANSPARENT); for (let i = 0; i < 18; i++) dc.fillRectangle((i * 41 + 7) % 360, gy + 8 + (i * 23) % 100, 4, 4);
+      [[50, 32], [316, 24]].forEach(([tx, r]) => {
+        const by = gy + 10, th = r * 2;
+        dc.setColor(c[3], TRANSPARENT); dc.fillRectangle(tx - 4, by - th, 8, th); dc.fillRectangle(tx, by - th + 10, T(r / 2) + 4, 4);
+        const cy = by - th - T(r / 2);
+        dc.setColor(c[4], TRANSPARENT);
+        Pix.disc(dc, tx, cy, r, 4); Pix.disc(dc, tx + T(r * 2 / 3), cy + T(r / 3), T(r * 2 / 3), 4); Pix.disc(dc, tx - T(r * 2 / 3), cy + T(r / 3), T(r * 3 / 5), 4);
+        dc.setColor(c[6], TRANSPARENT);
+        dc.fillRectangle(tx - T(r / 2), cy + T(r / 2), 8, 4); dc.fillRectangle(tx + T(r / 3), cy + T(r * 2 / 3), 8, 4); dc.fillRectangle(tx - r, cy + T(r / 2) + 4, 6, 4);
+        dc.setColor(c[5], TRANSPARENT);
+        dc.fillRectangle(tx - T(r / 3), cy - T(r / 2), 8, 4); dc.fillRectangle(tx + T(r / 4), cy - T(r / 4), 4, 4); dc.fillRectangle(tx - T(r * 2 / 3), cy, 4, 4);
+      });
+    }
+    function drawSpace(dc, c, gy) {
+      dc.setColor(c[0], TRANSPARENT); dc.fillRectangle(0, 0, 360, gy);
+      dc.setColor(c[1], TRANSPARENT); dc.fillRectangle(0, 150, 360, 40);
+      for (let x = 0; x < 360; x += 8) { dc.fillRectangle(x, 146, 4, 4); dc.fillRectangle(x + 4, 190, 4, 4); }
+      dc.setColor(c[4], TRANSPARENT); dc.fillRectangle(244, 162, 96, 4);
+      dc.setColor(c[3], TRANSPARENT); Pix.disc(dc, 292, 164, 26, 4);
+      dc.setColor(c[2], TRANSPARENT); Pix.disc(dc, 287, 159, 21, 4);
+      dc.setColor(c[4], TRANSPARENT); dc.fillRectangle(248, 170, 88, 4); dc.fillRectangle(258, 174, 68, 4);
+      dc.setColor(c[5], TRANSPARENT); Pix.disc(dc, 72, 180, 10, 4);
+      dc.setColor(c[5], TRANSPARENT); dc.fillRectangle(0, gy, 360, 360 - gy);
+      dc.setColor(c[6], TRANSPARENT); dc.fillRectangle(0, gy, 360, 4);
+      const cr = [40, 18, 12, 128, 60, 8, 236, 30, 16, 300, 70, 10, 180, 96, 12, 84, 84, 8];
+      for (let i = 0; i < cr.length; i += 3) {
+        const cx = cr[i], cy = gy + cr[i + 1], r = cr[i + 2];
+        dc.setColor(c[7], TRANSPARENT); dc.fillRectangle(cx - r, cy, r * 2, T(r / 2) + 2);
+        dc.setColor(c[6], TRANSPARENT); dc.fillRectangle(cx - r + 2, cy - 2, r * 2 - 4, 2);
+      }
+    }
+    function drawStatic(dc, sc, scene, cols) {
+      const gy = 246;
+      if (sc === SEA) drawSea(dc, cols, gy); else if (sc === CITY) drawCity(dc, cols, gy, scene);
+      else if (sc === SNOW) drawSnow(dc, cols, gy); else if (sc === CHERRY || sc === AUTUMN) drawTrees(dc, cols, gy);
+      else if (sc === SPACE) drawSpace(dc, cols, gy);
+    }
+    function drawDynamic(dc, sc, t, cols, stars) {
+      if (sc === CHERRY || sc === AUTUMN) {
+        for (let i = 0; i < 10; i++) {
+          dc.setColor(cols[4 + (i % 3)], TRANSPARENT);
+          const x = (i * 71 + t * 6) % 360, y = (i * 43 + t * 4) % 230 + 10;
+          dc.fillRectangle(x, y, 4, 4);
+          if (sc === AUTUMN) dc.fillRectangle(x + 2, y + 4, 2, 2);
+        }
+      } else if (sc === SPACE) {
+        for (let i = 0; i < stars.length / 2; i++) {
+          if ((t + i * 3) % 7 === 0) continue;
+          dc.setColor(i % 3 === 0 ? 0xFFF2B0 : 0xFFFFFF, TRANSPARENT);
+          const sx = stars[i * 2], sy = stars[i * 2 + 1];
+          dc.fillRectangle(sx - 2, sy - 2, 4, 4);
+          dc.fillRectangle((sx * 7 + 40) % 360, (sy * 3 + 20) % 230, 2, 2);
+        }
+      }
+    }
+    function drawDigital(dc, sc, color, accent) {
+      dc.setColor(color, TRANSPARENT);
+      if (sc === SEA) { for (let r = 0; r < 3; r++) for (let x = (r * 10) % 24; x < 360; x += 24) dc.fillRectangle(x, 226 + r * 8, 12, 3); }
+      else if (sc === CITY) { const b = [36, 30, 40, 68, 24, 62, 94, 36, 34, 236, 30, 56, 268, 26, 40, 296, 24, 50]; for (let i = 0; i < b.length; i += 3) dc.fillRectangle(b[i], 252 - b[i + 2], b[i + 1], b[i + 2]); }
+      else if (sc === SNOW) { tri(dc, 84, 252, 80, 64, 4); tri(dc, 280, 252, 90, 80, 4); }
+      else if (sc === CHERRY || sc === AUTUMN) {
+        dc.fillRectangle(58, 206, 6, 46); dc.fillRectangle(298, 210, 6, 42);
+        dc.setColor(accent, TRANSPARENT); Pix.disc(dc, 60, 200, 24, 4); Pix.disc(dc, 300, 204, 20, 4);
+      } else if (sc === SPACE) { Pix.disc(dc, 296, 214, 18, 4); dc.setColor(accent, TRANSPARENT); dc.fillRectangle(266, 214, 60, 3); }
+    }
+    return { MEADOW, SEA, CITY, SNOW, CHERRY, AUTUMN, SPACE, SEASONAL, HORIZON, seasonal, colors, drawStatic, drawDynamic, drawDigital };
+  })();
+
   // ---- 색 테이블 (MochiFaceView.mc 와 동일) ----
   const SKY = [
     [0xF7A8B8, 0xF9B9BE, 0xFBCAC2, 0xFDDCC6, 0xFFE9C9, 0xFFF3D6],
@@ -304,7 +457,7 @@
       if (!st.weatherFx || st.wx < 1) return;
       const t = anim ? sec : 0;
       if (st.wx === 1) {
-        if (pixel) { dc.setColor(night ? 0x39426B : 0xDCE3EA, TRANSPARENT); cloud((st.min * 4 + 150) % 440 - 60, 96); cloud((st.min * 3 + 330) % 440 - 60, 160); }
+        if (pixel && scn !== Scenery.CITY && scn !== Scenery.SNOW) { dc.setColor(night ? 0x39426B : 0xDCE3EA, TRANSPARENT); cloud((st.min * 4 + 150) % 440 - 60, 96); cloud((st.min * 3 + 330) % 440 - 60, 160); }
       } else if (st.wx === 2) {
         dc.setColor(pixel ? 0xCFE3FF : 0x5A7BA8, TRANSPARENT);
         for (let i = 0; i < 18; i++) dc.fillRectangle((i * 47 + 13) % 360, (i * 53 + t * 24) % bottom, 2, 8);
@@ -315,6 +468,9 @@
       }
     }
     const scene = st.background === 0 ? periodNow() : st.background === 5 ? SCENE_SIMPLE : st.background - 1;
+    const scn = st.scenery === Scenery.SEASONAL ? Scenery.seasonal(st.month + 1) : st.scenery;
+    const scnCols = (scn === Scenery.MEADOW || scene === SCENE_SIMPLE) ? [] : Scenery.colors(scn, scene);
+    const SCN_SHADOW = [0, 4, 3, 4, 2, 2, 6];
     const anim = st.animate, sec = st.sec;
     let frame = FRAME_OPEN, bob = 0;
     if (isSleepHour(st.hour)) { frame = FRAME_SLEEP; if (anim && sec % 4 < 2) bob = 2; }
@@ -349,7 +505,7 @@
       if (!st.is24) Pix.drawTextShadow(dc, st.hour < 12 ? 'AM' : 'PM', 290, timeY + 4, 2, 0xFFFFFF, shadow);
 
       const s = charScale(ci, [4, 5, 6], 136);
-      dc.setColor(scene === SCENE_SIMPLE ? 0x222222 : GRASS[scene][3], TRANSPARENT);
+      dc.setColor(scene === SCENE_SIMPLE ? 0x222222 : (scn === Scenery.MEADOW ? GRASS[scene][3] : scnCols[SCN_SHADOW[scn]]), TRANSPARENT);
       dc.fillRectangle(136, 252, 88, 5); dc.fillRectangle(148, 257, 64, 4);
       const head = drawChar(ci, frame, 180, 256, s, bob, flicker, -1);
       if (frame === FRAME_SLEEP) drawZzz(head[0], head[1], sec, anim, 0xFFFFFF, true);
@@ -381,10 +537,12 @@
       else if (scene === 1) {
         Pix.disc(dc, 292, 150, 20, 4);
         dc.fillRectangle(290, 116, 4, 8); dc.fillRectangle(290, 176, 4, 8); dc.fillRectangle(258, 148, 8, 4); dc.fillRectangle(318, 148, 8, 4);
-      } else if (scene === 2) Pix.disc(dc, 270, 244, 28, 4);
+      } else if (scene === 2) Pix.disc(dc, 270, scn === Scenery.SEA ? Scenery.HORIZON : 244, 28, 4);
       else {
         drawMoon(288, 148, 18, sky[3]);
       }
+      if (scn !== Scenery.MEADOW) Scenery.drawStatic(dc, scn, scene, scnCols);
+      else {
       dc.setColor(grass[0], TRANSPARENT); Pix.disc(dc, 70, 268, 64, 4); Pix.disc(dc, 300, 276, 76, 4);
       dc.setColor(grass[2], TRANSPARENT); dc.fillRectangle(0, groundY, W, H - groundY);
       dc.setColor(grass[1], TRANSPARENT); dc.fillRectangle(0, groundY, W, 6);
@@ -394,7 +552,10 @@
         const gx = (i * 53 + 17) % 360, gy = groundY + 20 + (i * 29) % 90;
         dc.fillRectangle(gx, gy, 4, 8); dc.fillRectangle(gx + 6, gy + 2, 4, 6);
       }
+      }
       // 여기까지 고정 배경 (워치에서는 버퍼 비트맵에 캐시) / 아래는 매번 그림
+      const t = anim ? sec : 0;
+      if (scn === Scenery.SPACE) { Scenery.drawDynamic(dc, scn, t, scnCols, STARS); return; }
       if (scene === 3) {
         for (let i = 0; i < STARS.length / 2; i++) {
           if (anim && (sec + i * 3) % 7 === 0) continue;
@@ -403,10 +564,13 @@
           if (i % 4 === 0) { dc.fillRectangle(sx - 2, sy - 6, 4, 12); dc.fillRectangle(sx - 6, sy - 2, 12, 4); }
           else dc.fillRectangle(sx - 2, sy - 2, 4, 4);
         }
-      } else {
+      } else if (scn !== Scenery.CITY && scn !== Scenery.SNOW) {
+        const y1 = scn === Scenery.MEADOW ? 128 : (scn === Scenery.SEA ? 110 : 96);
+        const y2 = scn === Scenery.MEADOW ? 186 : (scn === Scenery.SEA ? 160 : 140);
         dc.setColor(CLOUD[scene], TRANSPARENT);
-        cloud((st.min * 3 + 40) % 440 - 60, 128); cloud((st.min * 2 + 250) % 440 - 60, 186);
+        cloud((st.min * 3 + 40) % 440 - 60, y1); cloud((st.min * 2 + 250) % 440 - 60, y2);
       }
+      if (scn !== Scenery.MEADOW) Scenery.drawDynamic(dc, scn, t, scnCols, STARS);
       drawWeatherFx(240, true, scene === 3);
     }
     function cloud(x, y) { dc.fillRectangle(x + 12, y, 20, 8); dc.fillRectangle(x + 4, y + 8, 44, 8); dc.fillRectangle(x, y + 16, 56, 8); }
@@ -415,7 +579,12 @@
       const cx = 180, ti = scene === SCENE_SIMPLE ? 4 : scene, accent = accentColor(DIG_ACCENT[ti]);
       dc.setColor(DIG_BG[ti], DIG_BG[ti]); dc.clear();
       dc.setColor(DIG_HILL[ti], TRANSPARENT); dc.fillCircle(cx, 440, 200);
-      drawWeatherFx(250, false, ti === 3);
+      if (scn !== Scenery.MEADOW && scene !== SCENE_SIMPLE) {
+        const sil = DIG_HILL[ti] + 0x0A0A0A;
+        const leaf = scn === Scenery.CHERRY ? 0x5A2E45 : (scn === Scenery.AUTUMN ? 0x5A3A1E : 0x6A5A40);
+        Scenery.drawDigital(dc, scn, sil, (scn === Scenery.SPACE || scn === Scenery.CHERRY || scn === Scenery.AUTUMN) ? leaf : sil);
+      }
+      if (scn !== Scenery.SPACE) drawWeatherFx(250, false, ti === 3);
       const r = 170;
       dc.setPenWidth(8); dc.setColor(0x333842, TRANSPARENT); dc.drawArc(cx, 180, r, 'cw', 240, 120);
       const ring = ringInfo(accent);

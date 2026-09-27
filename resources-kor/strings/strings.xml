@@ -14,7 +14,7 @@
     <string id="SizeS">작게</string>
     <string id="SizeM">보통</string>
     <string id="SizeL">크게</string>
-    <string id="BgTitle">배경</string>
+    <string id="BgTitle">하늘(시간대)</string>
     <string id="BgAuto">자동(일출·일몰)</string>
     <string id="BgMorning">아침</string>
     <string id="BgDay">낮</string>
@@ -70,4 +70,13 @@
     <string id="DataNotif">알림</string>
     <string id="WeatherTitle">날씨 효과</string>
     <string id="StoreAppName">모찌 픽셀</string>
+    <string id="SceneryTitle">풍경</string>
+    <string id="ScnMeadow">풀밭</string>
+    <string id="ScnSea">바다</string>
+    <string id="ScnCity">도시</string>
+    <string id="ScnSnow">설산</string>
+    <string id="ScnCherry">벚꽃</string>
+    <string id="ScnAutumn">단풍</string>
+    <string id="ScnSpace">우주</string>
+    <string id="ScnSeason">계절 자동</string>
 </strings>

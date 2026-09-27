@@ -207,7 +207,7 @@ def check_preview(keys, counts):
     html = read("preview/index.html")
     key_map = {"Style": "style", "Character": "character", "CharStyle": "charStyle", "CharSize": "charSize",
                "Background": "background", "Accent": "accent", "TimeColor": "timeColor", "Ring": "ring",
-               "DateLang": "dateLang", "SleepAt": "sleepAt", "WakeAt": "wakeAt"}
+               "DateLang": "dateLang", "SleepAt": "sleepAt", "WakeAt": "wakeAt", "Scenery": "scenery"}
     names = re.findall(r"'[^']*'", re.search(r"const NAMES = \[(.*?)\]", html).group(1))
     for i, k in enumerate(keys):
         jk = key_map.get(k)

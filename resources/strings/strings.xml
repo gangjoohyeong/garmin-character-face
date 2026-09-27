@@ -14,7 +14,7 @@
     <string id="SizeS">Small</string>
     <string id="SizeM">Medium</string>
     <string id="SizeL">Large</string>
-    <string id="BgTitle">Background</string>
+    <string id="BgTitle">Sky (time of day)</string>
     <string id="BgAuto">Auto (sunrise/sunset)</string>
     <string id="BgMorning">Morning</string>
     <string id="BgDay">Day</string>
@@ -70,4 +70,13 @@
     <string id="DataNotif">Notifications</string>
     <string id="WeatherTitle">Weather effects</string>
     <string id="StoreAppName">Mochi Pixel</string>
+    <string id="SceneryTitle">Scenery</string>
+    <string id="ScnMeadow">Meadow</string>
+    <string id="ScnSea">Seaside</string>
+    <string id="ScnCity">City</string>
+    <string id="ScnSnow">Snowy peaks</string>
+    <string id="ScnCherry">Cherry blossoms</string>
+    <string id="ScnAutumn">Autumn leaves</string>
+    <string id="ScnSpace">Space</string>
+    <string id="ScnSeason">Seasonal</string>
 </strings>

@@ -8,7 +8,7 @@ Forerunner 265S/265용 픽셀 캐릭터 워치페이스. Monkey C.
 - 빌드 판이 둘이다: 전체판(`monkey.jungle`, source-full/resources-full) = 4캐릭터 개인용,
   스토어판(`store.jungle`, source-store/resources-store) = 모찌만. 공통 코드는 `source/`.
   팬아트 캐릭터 이름·에셋·설정 목록은 절대 공통 폴더나 스토어 폴더에 넣지 않는다 (`check_resources.py`가 검사).
-- `preview/watchface.js`는 `source/MochiFaceView.mc`, `Pix.mc`, `Smooth.mc`를 그대로 옮긴 것이다. 화면 로직을 바꾸면 둘 다 수정한다.
+- `preview/watchface.js`는 `source/MochiFaceView.mc`, `Pix.mc`, `Smooth.mc`, `Scenery.mc`를 그대로 옮긴 것이다. 화면 로직을 바꾸면 둘 다 수정한다.
 - 설정 항목을 추가하면 `Settings.mc`(KEYS/COUNTS/DEFAULTS/labels), `SettingsMenu.mc`, 영/한 `strings.xml`,
   두 판의 `properties.xml`·`settings.xml`, `preview/index.html`의 OPTIONS를 함께 바꾼다.
 - 검사: `python3 tools/check_resources.py`, `cd tools/check && npm ci && npm run lint`(+ source-full, source-store),

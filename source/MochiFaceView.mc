@@ -65,6 +65,13 @@ class MochiFaceView extends WatchUi.WatchFace {
     private var _bgRef as BufferedBitmapReference or Null = null;
     private var _bgScene as Number = -99;
     private var _bgMoon as Number = -1;
+    private var _bgScn as Number = -1;
+
+    // 풍경 (Scenery.*) 과 시간대에 맞춘 풍경 색
+    private var _scn as Number = 0;
+    private var _scnCols as Array<Number> = [] as Array<Number>;
+    // 풍경별 캐릭터 그림자 색 인덱스 (_scnCols 안)
+    private var _scnShadow as Array<Number> = [0, 4, 3, 4, 2, 2, 6] as Array<Number>;
 
     // 에셋 비트맵 캐시 (2장: 기본 표정과 깜빡임 등을 번갈아 불러오지 않도록)
     private var _bmpIds as Array = [null, null] as Array;
@@ -156,6 +163,9 @@ class MochiFaceView extends WatchUi.WatchFace {
         readStats();
         readWeather(clock);
         var scene = sceneFor(clock);
+        _scn = sceneryNow();
+        _scnCols = (_scn == Scenery.MEADOW || scene == SCENE_SIMPLE)
+            ? ([] as Array<Number>) : Scenery.colors(_scn, scene);
         var anim = Settings.animate && !_lowPower;
         var sec = clock.sec;
 
@@ -227,6 +237,16 @@ class MochiFaceView extends WatchUi.WatchFace {
             return SCENE_SIMPLE;
         }
         return bg - 1;
+    }
+
+    // 풍경 설정 (계절 자동이면 월로 결정)
+    private function sceneryNow() as Number {
+        var sc = Settings.get(Settings.SCENERY);
+        if (sc == Scenery.SEASONAL) {
+            var info = Gregorian.info(Time.now(), Time.FORMAT_SHORT);
+            return Scenery.seasonal(info.month as Number);
+        }
+        return sc;
     }
 
     private function isSleepHour(hour as Number) as Boolean {
@@ -414,7 +434,8 @@ class MochiFaceView extends WatchUi.WatchFace {
 
         // 캐릭터 + 그림자
         var s = charScale(ci, [4, 5, 6] as Array<Number>, 136);
-        var shadowColor = scene == SCENE_SIMPLE ? 0x222222 : ((_grass[scene] as Array)[3] as Number);
+        var shadowColor = scene == SCENE_SIMPLE ? 0x222222
+            : (_scn == Scenery.MEADOW ? ((_grass[scene] as Array)[3] as Number) : _scnCols[_scnShadow[_scn]]);
         dc.setColor(shadowColor, Graphics.COLOR_TRANSPARENT);
         dc.fillRectangle(180 + ox - 44, 252 + oy, 88, 5);
         dc.fillRectangle(180 + ox - 32, 257 + oy, 64, 4);
@@ -442,6 +463,11 @@ class MochiFaceView extends WatchUi.WatchFace {
         var ox = _ox;
         var oy = _oy;
 
+        var t = anim ? clock.sec : 0;
+        if (_scn == Scenery.SPACE) {
+            Scenery.drawDynamic(dc, _scn, t, _scnCols, ox, oy, _stars);
+            return;   // 우주: 구름·날씨 없음
+        }
         if (scene == 3) {
             // 별 (반짝임)
             for (var i = 0; i < _stars.size() / 2; i++) {
@@ -458,11 +484,16 @@ class MochiFaceView extends WatchUi.WatchFace {
                     dc.fillRectangle(sx - 2, sy - 2, 4, 4);
                 }
             }
-        } else {
-            // 구름 (분 단위로 천천히 이동)
+        } else if (_scn != Scenery.CITY && _scn != Scenery.SNOW) {
+            // 구름 (분 단위로 천천히 이동). 풍경마다 높이가 다름
+            var y1 = _scn == Scenery.MEADOW ? 128 : (_scn == Scenery.SEA ? 110 : 96);
+            var y2 = _scn == Scenery.MEADOW ? 186 : (_scn == Scenery.SEA ? 160 : 140);
             dc.setColor(_cloud[scene], Graphics.COLOR_TRANSPARENT);
-            drawCloud(dc, ((clock.min * 3 + 40) % 440) - 60 + ox, 128 + oy);
-            drawCloud(dc, ((clock.min * 2 + 250) % 440) - 60 + ox, 186 + oy);
+            drawCloud(dc, ((clock.min * 3 + 40) % 440) - 60 + ox, y1 + oy);
+            drawCloud(dc, ((clock.min * 2 + 250) % 440) - 60 + ox, y2 + oy);
+        }
+        if (_scn != Scenery.MEADOW) {
+            Scenery.drawDynamic(dc, _scn, t, _scnCols, ox, oy, _stars);
         }
         drawWeatherFx(dc, clock, anim, 240, true, scene == 3);
     }
@@ -474,18 +505,19 @@ class MochiFaceView extends WatchUi.WatchFace {
             return null;
         }
         var bmp = null;
-        if (_bgRef != null && _bgScene == scene && _bgMoon == _moon) {
+        if (_bgRef != null && _bgScene == scene && _bgMoon == _moon && _bgScn == _scn) {
             bmp = (_bgRef as BufferedBitmapReference).get();
         }
         if (bmp == null) {
             var pal = [] as Array<Number>;
             pal.addAll(_sky[scene] as Array<Number>);
-            pal.addAll(_grass[scene] as Array<Number>);
+            pal.addAll(_scn == Scenery.MEADOW ? (_grass[scene] as Array<Number>) : _scnCols);
             pal.add(_sunColor[scene]);
             pal.add(0x000000);
             _bgRef = Graphics.createBufferedBitmap({:width => _w, :height => _h, :palette => pal});
             _bgScene = scene;
             _bgMoon = _moon;
+            _bgScn = _scn;
             bmp = (_bgRef as BufferedBitmapReference).get();
             if (bmp == null) {
                 _bgRef = null;
@@ -532,9 +564,14 @@ class MochiFaceView extends WatchUi.WatchFace {
             dc.fillRectangle(292 + ox - 34, 150 + oy - 2, 8, 4);
             dc.fillRectangle(292 + ox + 26, 150 + oy - 2, 8, 4);
         } else if (scene == 2) {
-            Pix.disc(dc, 270 + ox, 244 + oy, 28, 4);
+            Pix.disc(dc, 270 + ox, (_scn == Scenery.SEA ? Scenery.HORIZON : 244) + oy, 28, 4);
         } else {
             drawMoon(dc, 288 + ox, 148 + oy, 18, sky[3] as Number);
+        }
+
+        if (_scn != Scenery.MEADOW) {
+            Scenery.drawStatic(dc, _scn, scene, _scnCols, ox, oy, _w, _h);
+            return;
         }
 
         // 먼 언덕
@@ -596,7 +633,7 @@ class MochiFaceView extends WatchUi.WatchFace {
         var ox = _ox;
         var oy = _oy;
         if (_wx == 1) {
-            if (pixel) {
+            if (pixel && _scn != Scenery.CITY && _scn != Scenery.SNOW) {
                 dc.setColor(night ? 0x39426B : 0xDCE3EA, Graphics.COLOR_TRANSPARENT);
                 drawCloud(dc, ((clock.min * 4 + 150) % 440) - 60 + ox, 96 + oy);
                 drawCloud(dc, ((clock.min * 3 + 330) % 440) - 60 + ox, 160 + oy);
@@ -705,7 +742,15 @@ class MochiFaceView extends WatchUi.WatchFace {
         // 아래쪽 행성 언덕
         dc.setColor(_digHill[ti], Graphics.COLOR_TRANSPARENT);
         dc.fillCircle(cx, 440 + oy, 200);
-        drawWeatherFx(dc, clock, anim, 250, false, ti == 3);
+        if (_scn != Scenery.MEADOW && scene != SCENE_SIMPLE) {
+            var hill = _digHill[ti];
+            var sil = hill + 0x0A0A0A;   // 언덕보다 조금 밝게
+            var leaf = _scn == Scenery.CHERRY ? 0x5A2E45 : (_scn == Scenery.AUTUMN ? 0x5A3A1E : 0x6A5A40);
+            Scenery.drawDigital(dc, _scn, sil, _scn == Scenery.SPACE || _scn == Scenery.CHERRY || _scn == Scenery.AUTUMN ? leaf : sil, ox, oy);
+        }
+        if (_scn != Scenery.SPACE) {
+            drawWeatherFx(dc, clock, anim, 250, false, ti == 3);
+        }
 
         if (dc has :setAntiAlias) {
             dc.setAntiAlias(true);

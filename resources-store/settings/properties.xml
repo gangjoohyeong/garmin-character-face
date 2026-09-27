@@ -12,6 +12,7 @@
     <property id="Slot4" type="number">3</property>
     <property id="SleepAt" type="number">2</property>
     <property id="WakeAt" type="number">1</property>
+    <property id="Scenery" type="number">0</property>
     <property id="DateLang" type="number">0</property>
     <property id="ShowDate" type="boolean">true</property>
     <property id="Animate" type="boolean">true</property>

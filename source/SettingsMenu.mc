@@ -8,7 +8,7 @@ class SettingsMenu extends WatchUi.Menu2 {
     function initialize() {
         Menu2.initialize({:title => Rez.Strings.MenuTitle});
         var order = [Settings.STYLE, Settings.CHARACTER, Settings.CHAR_STYLE, Settings.CHAR_SIZE,
-                     Settings.BACKGROUND, Settings.ACCENT, Settings.TIME_COLOR, Settings.RING,
+                     Settings.BACKGROUND, Settings.SCENERY, Settings.ACCENT, Settings.TIME_COLOR, Settings.RING,
                      Settings.SLOT1, Settings.SLOT2, Settings.SLOT3, Settings.SLOT4] as Array<Number>;
         for (var n = 0; n < order.size(); n++) {
             var i = order[n];

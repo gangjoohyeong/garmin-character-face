@@ -38,6 +38,18 @@
             <listEntry value="5">@Strings.BgSimple</listEntry>
         </settingConfig>
     </setting>
+    <setting propertyKey="@Properties.Scenery" title="@Strings.SceneryTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.ScnMeadow</listEntry>
+            <listEntry value="1">@Strings.ScnSea</listEntry>
+            <listEntry value="2">@Strings.ScnCity</listEntry>
+            <listEntry value="3">@Strings.ScnSnow</listEntry>
+            <listEntry value="4">@Strings.ScnCherry</listEntry>
+            <listEntry value="5">@Strings.ScnAutumn</listEntry>
+            <listEntry value="6">@Strings.ScnSpace</listEntry>
+            <listEntry value="7">@Strings.ScnSeason</listEntry>
+        </settingConfig>
+    </setting>
     <setting propertyKey="@Properties.Accent" title="@Strings.AccentTitle">
         <settingConfig type="list">
             <listEntry value="0">@Strings.ColorAuto</listEntry>

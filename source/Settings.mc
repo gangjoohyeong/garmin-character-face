@@ -23,7 +23,8 @@ module Settings {
     const SLEEP_AT = 12;    // 취침 시각 (SLEEP_HOURS 인덱스)
     const WAKE_AT = 13;     // 기상 시각 (WAKE_HOURS 인덱스)
     const DATE_LANG = 14;   // 날짜 언어: 0 워치 언어, 1 영어, 2 한국어
-    const LIST_COUNT = 15;
+    const SCENERY = 15;     // 풍경: 0 풀밭, 1 바다, 2 도시, 3 설산, 4 벚꽃, 5 단풍, 6 우주, 7 계절 자동
+    const LIST_COUNT = 16;
 
     // 정보 칸 데이터 종류
     const DATA_NONE = 0;
@@ -40,13 +41,13 @@ module Settings {
 
 
     var KEYS as Array<String> = ["Style", "Character", "CharStyle", "CharSize", "Background", "Accent",
-        "TimeColor", "Ring", "Slot1", "Slot2", "Slot3", "Slot4", "SleepAt", "WakeAt", "DateLang"] as Array<String>;
-    var COUNTS as Array<Number> = [2, 5, 3, 3, 6, 7, 2, 5, 11, 11, 11, 11, 5, 5, 3] as Array<Number>;
-    var DEFAULTS as Array<Number> = [0, 0, 0, 1, 0, 0, 0, 0, 1, 4, 2, 3, 2, 1, 0] as Array<Number>;
+        "TimeColor", "Ring", "Slot1", "Slot2", "Slot3", "Slot4", "SleepAt", "WakeAt", "DateLang", "Scenery"] as Array<String>;
+    var COUNTS as Array<Number> = [2, 5, 3, 3, 6, 7, 2, 5, 11, 11, 11, 11, 5, 5, 3, 8] as Array<Number>;
+    var DEFAULTS as Array<Number> = [0, 0, 0, 1, 0, 0, 0, 0, 1, 4, 2, 3, 2, 1, 0, 0] as Array<Number>;
     var SLEEP_HOURS as Array<Number> = [21, 22, 23, 0, 1] as Array<Number>;
     var WAKE_HOURS as Array<Number> = [5, 6, 7, 8, 9] as Array<Number>;
 
-    var vals as Array<Number> = [0, 0, 0, 1, 0, 0, 0, 0, 1, 4, 2, 3, 2, 1, 0] as Array<Number>;
+    var vals as Array<Number> = [0, 0, 0, 1, 0, 0, 0, 0, 1, 4, 2, 3, 2, 1, 0, 0] as Array<Number>;
     var showDate as Boolean = true;
     var animate as Boolean = true;
     var weatherFx as Boolean = true;
@@ -129,7 +130,8 @@ module Settings {
                  Rez.Strings.CharSizeTitle, Rez.Strings.BgTitle, Rez.Strings.AccentTitle,
                  Rez.Strings.TimeColorTitle, Rez.Strings.RingTitle, Rez.Strings.Slot1Title,
                  Rez.Strings.Slot2Title, Rez.Strings.Slot3Title, Rez.Strings.Slot4Title,
-                 Rez.Strings.SleepTitle, Rez.Strings.WakeTitle, Rez.Strings.DateLangTitle] as Array<ResourceId>)[i];
+                 Rez.Strings.SleepTitle, Rez.Strings.WakeTitle, Rez.Strings.DateLangTitle,
+                 Rez.Strings.SceneryTitle] as Array<ResourceId>)[i];
     }
 
     function labels(i as Number) as Array<ResourceId> {
@@ -158,6 +160,10 @@ module Settings {
                     Rez.Strings.RingSeconds, Rez.Strings.Off] as Array<ResourceId>;
         } else if (i == SLEEP_AT) {
             return [Rez.Strings.H21, Rez.Strings.H22, Rez.Strings.H23, Rez.Strings.H0, Rez.Strings.H1] as Array<ResourceId>;
+        } else if (i == SCENERY) {
+            return [Rez.Strings.ScnMeadow, Rez.Strings.ScnSea, Rez.Strings.ScnCity, Rez.Strings.ScnSnow,
+                    Rez.Strings.ScnCherry, Rez.Strings.ScnAutumn, Rez.Strings.ScnSpace,
+                    Rez.Strings.ScnSeason] as Array<ResourceId>;
         } else if (i == DATE_LANG) {
             return [Rez.Strings.LangAuto, Rez.Strings.LangEng, Rez.Strings.LangKor] as Array<ResourceId>;
         } else if (i == WAKE_AT) {
