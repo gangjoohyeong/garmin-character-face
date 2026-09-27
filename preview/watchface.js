@@ -32,7 +32,9 @@
     XTINY: '600 19px "Roboto Condensed", "Arial Narrow", sans-serif',
     TINY: '600 25px "Roboto Condensed", "Arial Narrow", sans-serif',
     NUMBER_MEDIUM: '700 64px "Roboto Condensed", "Arial Narrow", sans-serif',
+    SMALL: '600 31px "Roboto Condensed", "Arial Narrow", sans-serif',
     NUMBER_HOT: '700 92px "Roboto Condensed", "Arial Narrow", sans-serif',
+    NUMBER_THAI_HOT: '700 124px "Roboto Condensed", "Arial Narrow", sans-serif',
   };
   const T = Math.trunc;
 
@@ -434,20 +436,21 @@
     }
 
     // 디지털 날짜 줄 (MochiFaceView.drawDigitalDate 와 같음)
-    function drawDigitalDate(cx, y, color, ampm, ampmColor) {
+    function drawDigitalDate(cx, y, color, ampm, ampmColor, big) {
+      const font = big ? 'SMALL' : 'TINY', fontA = big ? 'SMALL' : 'XTINY', sd = big ? 4 : 3, sh = big ? 3 : 2;
       const month = st.month + 1, day = st.date, dow = st.dow;
       let date = null, pixelKo = false;
       if (st.showDate) {
         if (korean) { if (st.watchKorean) date = month + '월 ' + day + '일 (' + DAYS_KO[dow] + ')'; else pixelKo = true; }
         else date = DAYS_MED[dow] + ' ' + day + ' ' + MONTHS_MED[month - 1];
       }
-      const wd = date ? dc.getTextWidthInPixels(date, 'TINY') : (pixelKo ? Pix.koDate(dc, month, day, dow, 0, 0, 3, 2, false) : 0);
-      const wa = ampm ? dc.getTextWidthInPixels(ampm, 'XTINY') : 0;
+      const wd = date ? dc.getTextWidthInPixels(date, font) : (pixelKo ? Pix.koDate(dc, month, day, dow, 0, 0, sd, sh, false) : 0);
+      const wa = ampm ? dc.getTextWidthInPixels(ampm, fontA) : 0;
       const gap = (wd > 0 && wa > 0) ? 10 : 0;
       const x = cx - T((wd + gap + wa) / 2);
-      if (date) { dc.setColor(color, TRANSPARENT); dc.drawText(x, y, 'TINY', date, 'left'); }
-      else if (pixelKo) { dc.setColor(color, TRANSPARENT); Pix.koDate(dc, month, day, dow, x, y - 10, 3, 2, true); }
-      if (ampm) { dc.setColor(ampmColor, TRANSPARENT); dc.drawText(x + wd + gap, y, 'XTINY', ampm, 'left'); }
+      if (date) { dc.setColor(color, TRANSPARENT); dc.drawText(x, y, font, date, 'left'); }
+      else if (pixelKo) { dc.setColor(color, TRANSPARENT); Pix.koDate(dc, month, day, dow, x, y - 5 * sh, sd, sh, true); }
+      if (ampm) { dc.setColor(ampmColor, TRANSPARENT); dc.drawText(x + wd + gap, y, fontA, ampm, 'left'); }
     }
 
     if (st.aod) return drawAod();
@@ -615,7 +618,7 @@
       const fb = st.bat / 100;
       if (fb > 0.01) { dc.setColor(st.bat <= 20 ? 0xFF5252 : 0x7CFC8A, TRANSPARENT); dc.drawArc(cx, 180, r, 'cw', 240, 240 - T(120 * fb)); }
       dc.setPenWidth(1);
-      drawDigitalDate(cx, 50, 0xBBBBBB, st.is24 ? null : (st.hour < 12 ? 'AM' : 'PM'), accent);
+      drawDigitalDate(cx, 50, 0xBBBBBB, st.is24 ? null : (st.hour < 12 ? 'AM' : 'PM'), accent, false);
       const h = displayHour(st.hour), timeY = st.showDate ? 112 : 104;
       dc.setColor(st.timeColor === 1 ? accent : 0xFFFFFF, TRANSPARENT);
       dc.drawText(cx, timeY, 'NUMBER_HOT', (st.is24 ? fmt2(h) : String(h)) + ':' + fmt2(st.min));
@@ -638,23 +641,24 @@
     }
 
     function drawAod() {
+      // 가운데 큰 시각 + 위에 날짜 (+ AM/PM). MochiFaceView.drawAod 와 같음
       dc.setColor(0, 0); dc.clear();
       const m = st.min, dx = (m % 5 - 2) * 4, dy = (T(m / 5) % 5 - 2) * 4;
       const cx = 180 + dx, oy = dy, h = displayHour(st.hour);
       const ampm = st.is24 ? null : (st.hour < 12 ? 'AM' : 'PM');
       if (st.style === 0) {
+        const ts = 10, top = 180 - T(7 * ts / 2);
         if (st.showDate) {
-          if (korean) Pix.drawKoDate(dc, st.month + 1, st.date, st.dow, cx, 30 + oy, 3, 2, 0x777777, -1);
-          else { const date = DAYS[st.dow] + ' ' + st.date + ' ' + MONTHS[st.month]; dc.setColor(0x777777, TRANSPARENT); Pix.drawText(dc, date, cx - T(Pix.textWidth(date, 3) / 2), 34 + oy, 3); }
+          if (korean) Pix.drawKoDate(dc, st.month + 1, st.date, st.dow, cx, top - 48 + oy, 4, 3, 0x777777, -1);
+          else { const d = DAYS[st.dow] + ' ' + st.date + ' ' + MONTHS[st.month]; dc.setColor(0x777777, TRANSPARENT); Pix.drawText(dc, d, cx - T(Pix.textWidth(d, 4) / 2), top - 40 + oy, 4); }
         }
-        const timeY = st.showDate ? 60 : 50;
-        dc.setColor(0xAAAAAA, TRANSPARENT); Pix.drawTime(dc, h, m, cx, timeY + oy, 7, true, st.is24);
-        if (ampm) { dc.setColor(0x777777, TRANSPARENT); Pix.drawText(dc, ampm, cx + 110 - T(Pix.textWidth(ampm, 2) / 2), timeY + 4 + oy, 2); }
+        dc.setColor(0xAAAAAA, TRANSPARENT); Pix.drawTime(dc, h, m, cx, top + oy, ts, true, st.is24);
+        if (ampm) { dc.setColor(0x777777, TRANSPARENT); Pix.drawText(dc, ampm, cx - T(Pix.textWidth(ampm, 4) / 2), top + 7 * ts + 18 + oy, 4); }
       } else {
-        drawDigitalDate(cx, 50 + oy, 0x777777, ampm, 0x777777);
-        dc.setColor(0xAAAAAA, TRANSPARENT); dc.drawText(cx, (st.showDate ? 112 : 104) + oy, 'NUMBER_HOT', (st.is24 ? fmt2(h) : String(h)) + ':' + fmt2(m));
+        if (st.showDate) drawDigitalDate(cx, 100 + oy, 0x777777, ampm, 0x777777, true);
+        dc.setColor(0xAAAAAA, TRANSPARENT); dc.drawText(cx, 180 + oy, 'NUMBER_THAI_HOT', (st.is24 ? fmt2(h) : String(h)) + ':' + fmt2(m));
+        if (ampm && !st.showDate) { dc.setColor(0x777777, TRANSPARENT); dc.drawText(cx, 262 + oy, 'SMALL', ampm); }
       }
-      drawChar(ci, FRAME_SLEEP, cx, 256 + oy, 3, 0, false, 0x5A5A5A);
       const a = m * Math.PI / 30;
       dc.setColor(0x888888, TRANSPARENT);
       dc.fillRectangle(T(180 + 158 * Math.sin(a)) - 2, T(180 - 158 * Math.cos(a)) - 2, 4, 4);
