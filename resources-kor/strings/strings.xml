@@ -1,0 +1,20 @@
+<strings>
+    <string id="AppName">픽셀 친구들</string>
+    <string id="MenuTitle">워치페이스 설정</string>
+    <string id="StyleTitle">스타일</string>
+    <string id="StylePixel">픽셀아트</string>
+    <string id="StyleDigital">디지털</string>
+    <string id="CharTitle">캐릭터</string>
+    <string id="CharMochi">모찌</string>
+    <string id="CharSquirtle">꼬부기</string>
+    <string id="CharCharmander">파이리</string>
+    <string id="CharRandom">매일 랜덤</string>
+    <string id="BgTitle">배경</string>
+    <string id="BgAuto">자동(시간대)</string>
+    <string id="BgMorning">아침</string>
+    <string id="BgDay">낮</string>
+    <string id="BgEvening">저녁</string>
+    <string id="BgNight">밤</string>
+    <string id="BgSimple">심플(검정)</string>
+    <string id="AnimTitle">애니메이션</string>
+</strings>

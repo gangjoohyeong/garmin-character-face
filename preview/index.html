@@ -1,0 +1,229 @@
+<title>Pixel Pals Watch Face</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=Noto+Sans+KR:wght@400;500;700&family=Roboto+Condensed:wght@600;700&display=swap">
+<style>
+  :root {
+    --ground: #EDF0F4;
+    --surface: #FFFFFF;
+    --ink: #1C2230;
+    --muted: #5E6878;
+    --line: #D6DCE4;
+    --accent: #2F78B5;
+    --accent-ink: #FFFFFF;
+    --chip: #E3E8EF;
+    --bezel: #2A2F38;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground: #11141A; --surface: #1A1F28; --ink: #E7EBF1; --muted: #98A2B3;
+      --line: #2C3340; --accent: #6DB3EA; --accent-ink: #0D1520; --chip: #242B37; --bezel: #3A414D;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground: #11141A; --surface: #1A1F28; --ink: #E7EBF1; --muted: #98A2B3;
+    --line: #2C3340; --accent: #6DB3EA; --accent-ink: #0D1520; --chip: #242B37; --bezel: #3A414D;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--ground); color: var(--ink);
+    font-family: "Noto Sans KR", system-ui, sans-serif; font-size: 15px; line-height: 1.55;
+    padding: 28px 20px 48px; margin: 0;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; display: grid; gap: 28px; }
+  header h1 { font-family: "Silkscreen", monospace; font-weight: 400; font-size: 30px; margin: 0; letter-spacing: .02em; }
+  header p { margin: 4px 0 0; color: var(--muted); max-width: 62ch; }
+  .main { display: grid; grid-template-columns: minmax(0, 440px) minmax(0, 1fr); gap: 28px; align-items: start; }
+  .stage { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); display: grid; justify-items: center; gap: 12px; }
+  .watch {
+    width: min(100%, 420px); aspect-ratio: 1; border-radius: 50%; padding: 18px;
+    background: radial-gradient(circle at 30% 25%, #55606F, var(--bezel) 60%);
+    box-shadow: 0 18px 40px rgba(10, 16, 28, .28), inset 0 0 0 3px rgba(255,255,255,.08);
+  }
+  .watch canvas { width: 100%; height: 100%; border-radius: 50%; display: block; background: #000; image-rendering: pixelated; }
+  .readout { font-family: "Silkscreen", monospace; font-size: 13px; color: var(--muted); text-align: center; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: grid; gap: 20px; }
+  fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 8px; }
+  legend { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 0; margin-bottom: 8px; }
+  .seg { display: flex; flex-wrap: wrap; gap: 6px; }
+  .seg button {
+    font: inherit; font-size: 14px; border: 1px solid var(--line); background: var(--chip); color: var(--ink);
+    padding: 6px 12px; border-radius: 8px; cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .toggles { display: flex; flex-wrap: wrap; gap: 16px; }
+  .toggles label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  .sliders { display: grid; gap: 10px; }
+  .row { display: grid; grid-template-columns: 7.5em minmax(0, 1fr) 4.5em; gap: 10px; align-items: center; }
+  .row output { font-variant-numeric: tabular-nums; text-align: right; font-weight: 500; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .gallery h2 { font-family: "Silkscreen", monospace; font-weight: 400; font-size: 18px; margin: 0 0 4px; }
+  .gallery p { margin: 0 0 14px; color: var(--muted); }
+  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+  .cell { display: grid; justify-items: center; gap: 6px; cursor: pointer; background: none; border: 0; color: inherit; font: inherit; padding: 0; }
+  .cell canvas { width: 100%; max-width: 200px; aspect-ratio: 1; border-radius: 50%; border: 8px solid var(--bezel); background: #000; image-rendering: pixelated; }
+  .cell span { font-size: 13px; color: var(--muted); }
+  .note { font-size: 13px; color: var(--muted); }
+  @media (max-width: 760px) {
+    .main { grid-template-columns: minmax(0, 1fr); }
+    .stage { position: static; }
+    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Pixel Pals</h1>
+    <p>Forerunner 265S 워치페이스 미리보기. 워치 코드와 같은 스프라이트 데이터로 그리므로 실제 화면과 같은 배치입니다. 디지털 스타일의 숫자 글꼴만 워치 시스템 폰트와 조금 다릅니다.</p>
+  </header>
+
+  <div class="main">
+    <div class="stage">
+      <div class="watch"><canvas id="watch" width="360" height="360" aria-label="워치페이스 미리보기"></canvas></div>
+      <div class="readout" id="readout">360 x 360 AMOLED</div>
+    </div>
+
+    <div class="panel">
+      <fieldset><legend>스타일</legend>
+        <div class="seg" id="style" data-key="style">
+          <button data-v="0">픽셀아트</button><button data-v="1">디지털</button>
+        </div>
+      </fieldset>
+      <fieldset><legend>캐릭터</legend>
+        <div class="seg" id="character" data-key="character">
+          <button data-v="0">모찌</button><button data-v="1">꼬부기</button><button data-v="2">파이리</button><button data-v="3">매일 랜덤</button>
+        </div>
+      </fieldset>
+      <fieldset><legend>배경</legend>
+        <div class="seg" id="background" data-key="background">
+          <button data-v="0">자동(시간대)</button><button data-v="1">아침</button><button data-v="2">낮</button>
+          <button data-v="3">저녁</button><button data-v="4">밤</button><button data-v="5">심플</button>
+        </div>
+      </fieldset>
+      <fieldset><legend>화면 상태</legend>
+        <div class="toggles">
+          <label><input type="checkbox" id="animate" checked> 애니메이션</label>
+          <label><input type="checkbox" id="aod"> AOD (항상 켜짐)</label>
+          <label><input type="checkbox" id="is24" checked> 24시간제</label>
+          <label><input type="checkbox" id="live" checked> 현재 시각</label>
+        </div>
+      </fieldset>
+      <fieldset><legend>시각</legend>
+        <div class="seg" id="presets">
+          <button data-t="450">아침 7:30</button><button data-t="780">낮 13:00</button>
+          <button data-t="1110">저녁 18:30</button><button data-t="1420">밤 23:40</button>
+        </div>
+        <div class="row"><span>시각</span><input type="range" id="time" min="0" max="1439" value="780"><output id="timeOut"></output></div>
+      </fieldset>
+      <fieldset><legend>센서 값 (예시)</legend>
+        <div class="sliders">
+          <div class="row"><span>심박</span><input type="range" id="hr" min="40" max="190" value="68"><output id="hrOut"></output></div>
+          <div class="row"><span>배터리</span><input type="range" id="bat" min="0" max="100" value="82"><output id="batOut"></output></div>
+          <div class="row"><span>Body Battery</span><input type="range" id="bb" min="0" max="100" value="64"><output id="bbOut"></output></div>
+          <div class="row"><span>걸음</span><input type="range" id="steps" min="0" max="15000" step="50" value="6420"><output id="stepsOut"></output></div>
+        </div>
+        <p class="note">걸음 목표는 10,000보로 가정합니다. 목표를 넘으면 링과 아크가 초록색으로 바뀝니다.</p>
+      </fieldset>
+    </div>
+  </div>
+
+  <section class="gallery">
+    <h2>All combos</h2>
+    <p>스타일 2종 × 캐릭터 3종. 누르면 위 미리보기에 적용됩니다.</p>
+    <div class="grid" id="grid"></div>
+  </section>
+</div>
+
+<script src="sprites.js"></script>
+<script src="watchface.js"></script>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const state = { style: 0, character: 0, background: 0 };
+  const NAMES = ['모찌', '꼬부기', '파이리'];
+  const STYLE_NAMES = ['픽셀아트', '디지털'];
+
+  function setupCanvas(cv) {
+    const dpr = Math.max(1, Math.round(window.devicePixelRatio || 1));
+    cv.width = 360 * dpr; cv.height = 360 * dpr;
+    const ctx = cv.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    return ctx;
+  }
+  const mainCtx = setupCanvas($('watch'));
+
+  document.querySelectorAll('.seg[data-key]').forEach(seg => {
+    seg.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      state[seg.dataset.key] = +b.dataset.v; syncSeg(); draw();
+    });
+  });
+  function syncSeg() {
+    document.querySelectorAll('.seg[data-key]').forEach(seg => {
+      seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.v === state[seg.dataset.key])));
+    });
+  }
+  $('presets').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    $('live').checked = false; $('time').value = b.dataset.t; draw();
+  });
+  ['animate', 'aod', 'is24', 'live', 'hr', 'bat', 'bb', 'steps'].forEach(id => $(id).addEventListener('input', draw));
+  $('time').addEventListener('input', () => { $('live').checked = false; draw(); });
+
+  function snapshot(overrides) {
+    const now = new Date();
+    let hour, min;
+    if ($('live').checked) { hour = now.getHours(); min = now.getMinutes(); $('time').value = hour * 60 + min; }
+    else { const t = +$('time').value; hour = Math.floor(t / 60); min = t % 60; }
+    return Object.assign({
+      style: state.style, character: state.character, background: state.background,
+      animate: $('animate').checked, aod: $('aod').checked, is24: $('is24').checked,
+      hour, min, sec: now.getSeconds(),
+      dow: now.getDay(), date: now.getDate(), month: now.getMonth(),
+      day: Math.floor(now.getTime() / 86400000),
+      hr: +$('hr').value, bat: +$('bat').value, bb: +$('bb').value, steps: +$('steps').value, goal: 10000,
+    }, overrides || {});
+  }
+
+  function paint(ctx, st) {
+    ctx.save();
+    ctx.beginPath(); ctx.arc(180, 180, 180, 0, Math.PI * 2); ctx.clip();
+    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, 360, 360);
+    WatchFace.render(ctx, st);
+    ctx.restore();
+  }
+
+  const cells = [];
+  for (let s = 0; s < 2; s++) for (let c = 0; c < 3; c++) {
+    const btn = document.createElement('button');
+    btn.className = 'cell'; btn.type = 'button';
+    const cv = document.createElement('canvas'); cv.width = 360; cv.height = 360;
+    const label = document.createElement('span'); label.textContent = STYLE_NAMES[s] + ' · ' + NAMES[c];
+    btn.append(cv, label);
+    btn.addEventListener('click', () => { state.style = s; state.character = c; syncSeg(); draw(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+    $('grid').appendChild(btn);
+    cells.push({ ctx: setupCanvas(cv), s, c });
+  }
+
+  function draw() {
+    const st = snapshot();
+    paint(mainCtx, st);
+    for (const cell of cells) paint(cell.ctx, Object.assign({}, st, { style: cell.s, character: cell.c, aod: false }));
+    $('timeOut').textContent = String(st.hour).padStart(2, '0') + ':' + String(st.min).padStart(2, '0');
+    $('hrOut').textContent = st.hr + ' bpm';
+    $('batOut').textContent = st.bat + '%';
+    $('bbOut').textContent = st.bb;
+    $('stepsOut').textContent = st.steps.toLocaleString('ko-KR');
+    const who = st.character < 3 ? NAMES[st.character] : NAMES[st.day % 3] + ' (랜덤)';
+    $('readout').textContent = STYLE_NAMES[st.style] + ' · ' + who + (st.aod ? ' · AOD' : '');
+  }
+
+  syncSeg();
+  draw();
+  setInterval(draw, 1000);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+})();
+</script>

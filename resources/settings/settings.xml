@@ -1,0 +1,29 @@
+<settings>
+    <setting propertyKey="@Properties.Style" title="@Strings.StyleTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.StylePixel</listEntry>
+            <listEntry value="1">@Strings.StyleDigital</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.Character" title="@Strings.CharTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.CharMochi</listEntry>
+            <listEntry value="1">@Strings.CharSquirtle</listEntry>
+            <listEntry value="2">@Strings.CharCharmander</listEntry>
+            <listEntry value="3">@Strings.CharRandom</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.Background" title="@Strings.BgTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.BgAuto</listEntry>
+            <listEntry value="1">@Strings.BgMorning</listEntry>
+            <listEntry value="2">@Strings.BgDay</listEntry>
+            <listEntry value="3">@Strings.BgEvening</listEntry>
+            <listEntry value="4">@Strings.BgNight</listEntry>
+            <listEntry value="5">@Strings.BgSimple</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.Animate" title="@Strings.AnimTitle">
+        <settingConfig type="boolean" />
+    </setting>
+</settings>

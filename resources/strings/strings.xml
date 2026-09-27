@@ -1,0 +1,20 @@
+<strings>
+    <string id="AppName">Pixel Pals</string>
+    <string id="MenuTitle">Face Settings</string>
+    <string id="StyleTitle">Style</string>
+    <string id="StylePixel">Pixel Art</string>
+    <string id="StyleDigital">Digital</string>
+    <string id="CharTitle">Character</string>
+    <string id="CharMochi">Mochi</string>
+    <string id="CharSquirtle">Squirtle</string>
+    <string id="CharCharmander">Charmander</string>
+    <string id="CharRandom">Random (daily)</string>
+    <string id="BgTitle">Background</string>
+    <string id="BgAuto">Auto (time of day)</string>
+    <string id="BgMorning">Morning</string>
+    <string id="BgDay">Day</string>
+    <string id="BgEvening">Evening</string>
+    <string id="BgNight">Night</string>
+    <string id="BgSimple">Simple (black)</string>
+    <string id="AnimTitle">Animation</string>
+</strings>
