@@ -463,19 +463,26 @@ def write_png(path, pix):
                 + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b""))
 
 
-def write_icon(c, path, size=60, s=2):   # FR265S/265 런처 아이콘 규격 60x60
-    """앱 아이콘: 하늘색 원 위에 캐릭터."""
+def write_icon(c, path, size=60, fill=0.9):
+    """앱 아이콘: 원 안 정중앙에 캐릭터 (꼬리까지 포함한 전체 모양 기준), 발밑부터 풀밭.
+    fill = 캐릭터가 차지할 최대 비율 (정수 배율로 맞춤)."""
+    runs = [(v & 63, (v >> 6) & 63, (v >> 12) & 63, (v >> 18) & 15) for v in c["base"]]
+    x0 = min(x for x, y, w, ci in runs)
+    x1 = max(x + w for x, y, w, ci in runs)
+    y0 = min(y for x, y, w, ci in runs)
+    y1 = max(y + 1 for x, y, w, ci in runs)
+    bw, bh = x1 - x0, y1 - y0
+    s = max(1, int(size * fill / max(bw, bh)))
+    ox = (size - bw * s) // 2 - x0 * s
+    oy = (size - bh * s) // 2 - y0 * s
+    ground = oy + y1 * s - 2 * s          # 발이 풀밭에 살짝 묻히도록
     pix = [[(0, 0, 0, 0)] * size for _ in range(size)]
     r = size / 2
     for y in range(size):
         for x in range(size):
             if (x + 0.5 - r) ** 2 + (y + 0.5 - r) ** 2 <= r * r:
-                pix[y][x] = (0x75, 0xC6, 0xF9, 255) if y < size * 0.68 else (0x6C, 0xCB, 0x4E, 255)
-    # 몸 중심(anchor2, 반 칸 단위)을 가운데에, 키가 커도 머리가 잘리지 않게
-    ox = (size - c["anchor2"] * s) // 2
-    oy = max(3, int(size * 0.72) - c["h"] * s)
-    for v in c["base"]:
-        x, y, w, ci = v & 63, (v >> 6) & 63, (v >> 12) & 63, (v >> 18) & 15
+                pix[y][x] = (0x75, 0xC6, 0xF9, 255) if y < ground else (0x6C, 0xCB, 0x4E, 255)
+    for x, y, w, ci in runs:
         col = c["pal"][ci]
         rgba = ((col >> 16) & 255, (col >> 8) & 255, col & 255, 255)
         for yy in range(y * s, (y + 1) * s):
@@ -592,7 +599,7 @@ def main():
     icon_char = [i for i, c in enumerate(CHARACTERS) if c["name"] == "dorongi"][0]
     write_icon(chars[icon_char], os.path.join(ROOT, "resources", "drawables", "launcher_icon.png"))
     os.makedirs(os.path.join(ROOT, "docs", "store"), exist_ok=True)
-    write_icon(chars[icon_char], os.path.join(ROOT, "docs", "store", "icon-512.png"), size=512, s=14)
+    write_icon(chars[icon_char], os.path.join(ROOT, "docs", "store", "icon-512.png"), size=512, fill=0.8)
 
     total = sum(len(c["base"]) + sum(len(x) for x in c["face"]) + len(c["extra"]) for c in chars)
     print("OK: %d characters, %d runs total" % (len(chars), total))
