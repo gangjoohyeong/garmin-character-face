@@ -63,13 +63,16 @@ jobs:
       - name: SDK / 기기 파일 받기
         if: steps.secrets.outputs.ok == 'true'
         run: |
+          # 실패하면 마지막 줄들을 주석(annotation)으로 남김 (로그 없이도 원인 확인용)
+          step() { if ! "$@" > step.log 2>&1; then cat step.log; tail -n 8 step.log | while IFS= read -r l; do echo "::error title=$1 $2::$l"; done; exit 1; fi; cat step.log; }
           curl -s https://raw.githubusercontent.com/lindell/connect-iq-sdk-manager-cli/master/install.sh | sh -s -- -b "$HOME/.local/bin"
           export PATH="$HOME/.local/bin:$PATH"
-          connect-iq-sdk-manager agreement accept
-          connect-iq-sdk-manager login
-          connect-iq-sdk-manager sdk set "^8"
-          connect-iq-sdk-manager device download --manifest=manifest.xml
+          step connect-iq-sdk-manager agreement accept
+          step connect-iq-sdk-manager login
+          step connect-iq-sdk-manager sdk set "^8"
+          step connect-iq-sdk-manager device download --manifest=manifest.xml
           echo "$(connect-iq-sdk-manager sdk current-path --bin)" >> "$GITHUB_PATH"
+          echo "::notice title=SDK::$(connect-iq-sdk-manager sdk current-path)"
 
       - uses: actions/setup-python@v5
         if: steps.secrets.outputs.ok == 'true'
@@ -88,20 +91,33 @@ jobs:
           mkdir -p keys bin
           openssl genrsa -out keys/ci.pem 4096 2>/dev/null
           openssl pkcs8 -topk8 -inform PEM -outform DER -in keys/ci.pem -out keys/ci.der -nocrypt
+          fail=0
+          # 컴파일 오류/경고 줄을 주석(annotation)으로 남김
+          build() {
+            name="$1"; shift
+            echo "::group::$name"
+            if monkeyc "$@" > build.log 2>&1; then ok=1; else ok=0; fi
+            cat build.log
+            echo "::endgroup::"
+            grep -E "^(ERROR|WARNING)" build.log | head -n 30 | while IFS= read -r l; do
+              case "$l" in ERROR*) echo "::error title=$name::$l";; *) echo "::warning title=$name::$l";; esac
+            done
+            if [ $ok = 0 ]; then
+              grep -qE "^ERROR" build.log || tail -n 8 build.log | while IFS= read -r l; do echo "::error title=$name::$l"; done
+              fail=1
+            else
+              echo "::notice title=$name::성공"
+            fi
+          }
           for d in fr265s fr265; do
-            echo "::group::전체판 $d"
-            monkeyc -f monkey.jungle -d "$d" -o "bin/PixelPals-$d.prg" -y keys/ci.der -l 0 -w
-            echo "::endgroup::"
-            echo "::group::스토어판 $d"
-            monkeyc -f store.jungle -d "$d" -o "bin/MochiPixel-$d.prg" -y keys/ci.der -l 0 -w
-            echo "::endgroup::"
+            build "전체판 $d" -f monkey.jungle -d "$d" -o "bin/PixelPals-$d.prg" -y keys/ci.der -l 0 -w
+            build "스토어판 $d" -f store.jungle -d "$d" -o "bin/MochiPixel-$d.prg" -y keys/ci.der -l 0 -w
           done
-          echo "::group::스토어 패키지"
-          monkeyc -e -r -f store.jungle -o bin/MochiPixel.iq -y keys/ci.der -l 0 -w
-          echo "::endgroup::"
+          build "스토어 패키지" -e -r -f store.jungle -o bin/MochiPixel.iq -y keys/ci.der -l 0 -w
+          exit $fail
 
       - name: .prg 업로드
-        if: steps.secrets.outputs.ok == 'true'
+        if: always() && steps.secrets.outputs.ok == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: PixelPals-builds
