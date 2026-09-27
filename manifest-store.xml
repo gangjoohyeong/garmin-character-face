@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <iq:manifest version="3" xmlns:iq="http://www.garmin.com/xml/connectiq">
-    <iq:application id="feeeef9435a64567a7e3e082c59acaa2" type="watchface" name="@Strings.StoreAppName"
+    <iq:application id="d071fe1535d44f3a8f7ae30278251fdb" type="watchface" name="@Strings.StoreAppName"
         entry="MochiFaceApp" launcherIcon="@Drawables.LauncherIcon" minApiLevel="3.2.0" version="0.0.1">
         <iq:products>
             <iq:product id="fr265s"/>
