@@ -23,6 +23,16 @@ jobs:
         run: python tools/fetch_assets.py && test -f source/Assets.mc
       - name: 미리보기 JS 문법 검사
         run: node --check preview/watchface.js
+      - name: 리소스 교차 검사
+        run: python tools/check_resources.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Monkey C 문법 검사
+        working-directory: tools/check
+        run: |
+          npm ci
+          npm run lint
 
   # Connect IQ SDK 로 실제 컴파일 (GARMIN_USERNAME / GARMIN_PASSWORD 비밀값 필요)
   build:

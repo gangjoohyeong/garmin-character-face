@@ -19,6 +19,7 @@ fi
 python3 tools/gen_sprites.py
 python3 -c "import PIL" 2>/dev/null || python3 -m pip install --user pillow
 python3 tools/fetch_assets.py
+python3 tools/check_resources.py
 mkdir -p bin
 "$CIQ_SDK/bin/monkeyc" -f monkey.jungle -d "$DEVICE" -o bin/PixelPals.prg -y "$KEY" -l 0 -w
 echo "완료: bin/PixelPals.prg"

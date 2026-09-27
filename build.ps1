@@ -50,6 +50,8 @@ if (Get-Command python -ErrorAction SilentlyContinue) {
     python -c "import PIL" 2>$null
     if ($LASTEXITCODE -ne 0) { python -m pip install --user pillow }
     python tools\fetch_assets.py
+    python tools\check_resources.py
+    if ($LASTEXITCODE -ne 0) { Write-Error "리소스 검사 실패 (위 목록 참고)" }
 } elseif (-not (Test-Path (Join-Path $root "source\Assets.mc"))) {
     Write-Error "Python 이 필요합니다 (source\Assets.mc 생성용). https://www.python.org 에서 설치하세요."
 }
