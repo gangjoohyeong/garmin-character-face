@@ -29,6 +29,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 MOCHI = {
     "name": "mochi",
+    "label": "CharMochi",
+    "store": True,        # 오리지널 캐릭터 → 스토어판에 포함
     "palette": {
         "K": 0x2B2B3A, "W": 0xFFF8EE, "S": 0xE6D5C3, "P": 0xFF9BB3,
         "G": 0x6CC56C, "R": 0xE0506A,
@@ -72,6 +74,7 @@ MOCHI = {
 
 SQUIRTLE = {
     "name": "squirtle",
+    "label": "CharSquirtle",
     "palette": {
         "K": 0x23303D, "B": 0x7FCBEA, "b": 0x4E9FC6, "S": 0xB8733A,
         "Y": 0xF5E3A3, "y": 0xDCC47E, "E": 0x4A1C1C, "W": 0xFFFFFF,
@@ -118,6 +121,7 @@ SQUIRTLE = {
 
 CHARMANDER = {
     "name": "charmander",
+    "label": "CharCharmander",
     "palette": {
         "K": 0x3A2320, "O": 0xF4893A, "o": 0xCF6420, "Y": 0xF7E08A,
         "R": 0xE8402A, "F": 0xFFD23F, "W": 0xFFFFFF, "M": 0xC8324A,
@@ -221,6 +225,7 @@ def build_dorongi_grid():
 
 DORONGI = {
     "name": "dorongi",
+    "label": "CharDorongi",
     "palette": {
         "K": 0x2B2A22, "H": 0xD8D49B, "B": 0xF4EFD3, "T": 0xE3E0A6,
         "S": 0xB5BF74, "W": 0xFFFFFF, "R": 0xE0506A,
@@ -596,19 +601,7 @@ def write_icon(c, path, size=70, s=3):
     write_png(path, pix)
 
 
-def main():
-    chars = [build_character(c) for c in CHARACTERS]
-    smooth = [build_smooth(sm) for sm in SMOOTH]
-    small_chars = "".join(SMALL.keys())
-    font = {
-        "big": [row_masks(BIG[str(d)]) for d in range(10)],
-        "chars": small_chars,
-        "small": [bits(SMALL[c]) for c in small_chars],
-        "icons": [bits(ICONS[k]) for k in ICON_ORDER],
-        "hangul": [row_masks(HANGUL[k]) for k in HANGUL_ORDER],
-    }
-
-    # ---- Monkey C ----
+def emit_monkeyc(path, chars, smooth, font, names, labels):
     def arr(a):
         return "[" + ", ".join(str(x) for x in a) + "]"
 
@@ -620,7 +613,11 @@ def main():
     L.append("import Toybox.Lang;")
     L.append("")
     L.append("module Sprites {")
-    L.append("    // 캐릭터: 0 모찌, 1 꼬부기, 2 파이리, 3 도롱이")
+    L.append("    // 캐릭터: %s" % ", ".join("%d %s" % (i, n) for i, n in enumerate(labels)))
+    L.append("    const CHARACTER_COUNT = %d;" % len(chars))
+    L.append("    function characterNames() as Array<ResourceId> {")
+    L.append("        return [%s] as Array<ResourceId>;" % ", ".join("Rez.Strings." + n for n in names))
+    L.append("    }")
     L.append("    var W as Array<Number> = %s as Array<Number>;" % arr([c["w"] for c in chars]))
     L.append("    var H as Array<Number> = %s as Array<Number>;" % arr([c["h"] for c in chars]))
     L.append("    var HEAD as Array = [%s] as Array;" % ", ".join(arr(c["head"]) for c in chars))
@@ -665,8 +662,38 @@ def main():
     L.append("    var HANGUL as Array = [%s] as Array;" % ", ".join(arr(g) for g in font["hangul"]))
     L.append("}")
     L.append("")
-    with open(os.path.join(ROOT, "source", "Sprites.mc"), "w", encoding="utf-8") as f:
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
         f.write("\n".join(L))
+
+
+
+def main():
+    chars = [build_character(c) for c in CHARACTERS]
+    smooth = [build_smooth(sm) for sm in SMOOTH]
+    small_chars = "".join(SMALL.keys())
+    font = {
+        "big": [row_masks(BIG[str(d)]) for d in range(10)],
+        "chars": small_chars,
+        "small": [bits(SMALL[c]) for c in small_chars],
+        "icons": [bits(ICONS[k]) for k in ICON_ORDER],
+        "hangul": [row_masks(HANGUL[k]) for k in HANGUL_ORDER],
+    }
+
+    # ---- Monkey C ----
+    def arr(a):
+        return "[" + ", ".join(str(x) for x in a) + "]"
+
+    def hexarr(a):
+        return "[" + ", ".join("0x%06X" % x for x in a) + "]"
+
+    # 전체판 (개인 사용) / 스토어판 (오리지널 캐릭터만)
+    emit_monkeyc(os.path.join(ROOT, "source-full", "Sprites.mc"), chars, smooth, font,
+                 [c["label"] for c in CHARACTERS], [c["name"] for c in CHARACTERS])
+    store = [i for i, c in enumerate(CHARACTERS) if c.get("store")]
+    emit_monkeyc(os.path.join(ROOT, "source-store", "Sprites.mc"), [chars[i] for i in store],
+                 [smooth[i] for i in store], font, [CHARACTERS[i]["label"] for i in store],
+                 [CHARACTERS[i]["name"] for i in store])
 
     # ---- JS ----
     js = {"chars": chars, "smooth": smooth, "font": font}
@@ -676,6 +703,8 @@ def main():
         f.write("window.SPRITES = " + json.dumps(js) + ";\n")
 
     write_icon(chars[0], os.path.join(ROOT, "resources", "drawables", "launcher_icon.png"))
+    os.makedirs(os.path.join(ROOT, "docs", "store"), exist_ok=True)
+    write_icon(chars[0], os.path.join(ROOT, "docs", "store", "icon-512.png"), size=512, s=16)
 
     total = sum(len(c["base"]) + sum(len(x) for x in c["face"]) + len(c["extra"]) for c in chars)
     print("OK: %d characters, %d runs total" % (len(chars), total))

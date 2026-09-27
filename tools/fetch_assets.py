@@ -10,9 +10,9 @@
   - 모찌            : 오리지널 캐릭터라 벡터 그림을 그대로 씀
 
 만드는 파일:
-  resources/drawables/assets.xml      비트맵 리소스 목록
-  resources/drawables/assets/*.png    크기별 비트맵 (66/88/110/132px) + AOD 외곽선
-  source/Assets.mc                    (캐릭터, 크기) -> 리소스 ID
+  resources-full/drawables/assets.xml    비트맵 리소스 목록 (전체판에만 들어감)
+  resources-full/drawables/assets/*.png  크기별 비트맵 (66/88/110/132px) + AOD 외곽선
+  source-full/Assets.mc                  (캐릭터, 크기) -> 리소스 ID
   preview/assets.js                   미리보기용 같은 이미지 (data URI)
 
 에셋을 못 구하면(오프라인, Pillow 없음, 파일 없음) 해당 캐릭터는 비워 두고,
@@ -28,7 +28,7 @@ import urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CACHE = os.path.join(ROOT, "assets", "cache")
-OUT_DIR = os.path.join(ROOT, "resources", "drawables", "assets")
+OUT_DIR = os.path.join(ROOT, "resources-full", "drawables", "assets")
 
 # 캐릭터 인덱스 -> 에셋 정보 (0 모찌는 없음)
 SOURCES = {
@@ -186,7 +186,8 @@ def main():
         for rid in list(made[ci]["sizes"].values()) + [made[ci]["aod"]]:
             lines.append('    <bitmap id="%s" filename="assets/%s.png" />' % (rid, rid))
     lines.append("</drawables>")
-    with open(os.path.join(ROOT, "resources", "drawables", "assets.xml"), "w", encoding="utf-8") as f:
+    os.makedirs(os.path.dirname(OUT_DIR), exist_ok=True)
+    with open(os.path.join(ROOT, "resources-full", "drawables", "assets.xml"), "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
 
     # ---- source/Assets.mc ----
@@ -205,7 +206,7 @@ def main():
     for ci in sorted(made):
         L.append("        if (ci == %d) { return Rez.Drawables.%s; }" % (ci, made[ci]["aod"]))
     L += ["        return null;", "    }", "}", ""]
-    with open(os.path.join(ROOT, "source", "Assets.mc"), "w", encoding="utf-8") as f:
+    with open(os.path.join(ROOT, "source-full", "Assets.mc"), "w", encoding="utf-8") as f:
         f.write("\n".join(L))
 
     # ---- preview/assets.js ----

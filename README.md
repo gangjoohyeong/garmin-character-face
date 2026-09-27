@@ -31,22 +31,25 @@
 
 ```
 garmin-character-face/
-├─ manifest.xml              앱 정보 (fr265s, fr265)
-├─ monkey.jungle
-├─ build.ps1 / build.sh      빌드 스크립트
-├─ source/
-│  ├─ MochiFaceApp.mc        앱 진입점, 설정 변경 처리
-│  ├─ MochiFaceView.mc       화면 그리기 (픽셀/디지털/AOD)
-│  ├─ Pix.mc                 픽셀 캐릭터·픽셀폰트·한글 날짜 그리기
-│  ├─ Smooth.mc              디지털(벡터) 캐릭터 그리기
-│  ├─ Settings.mc            설정 저장/불러오기
-│  ├─ SettingsMenu.mc        워치 자체 설정 메뉴
-│  └─ Sprites.mc             (자동 생성) 캐릭터·폰트·한글 데이터
-├─ resources/                영어 문자열, 설정 정의, 아이콘
-├─ resources-kor/            한국어 문자열 (워치 언어가 한국어면 자동 사용)
-├─ tools/gen_sprites.py      캐릭터 그림 정의 → Sprites.mc / sprites.js 생성
-├─ tools/fetch_assets.py     외부 에셋 받기·가공 → Assets.mc / assets.js (커밋 안 함)
-└─ preview/index.html        브라우저 미리보기
+├─ monkey.jungle / manifest.xml         전체판 (개인 사용: 모찌·꼬부기·파이리·도롱이)
+├─ store.jungle / manifest-store.xml    스토어판 (공개 배포용: 모찌만, 앱 이름 Mochi Pixel)
+├─ build.ps1 / build.sh                 빌드 스크립트
+├─ source/                              공통 코드
+│  ├─ MochiFaceApp.mc                   앱 진입점, 설정 변경 처리
+│  ├─ MochiFaceView.mc                  화면 그리기 (픽셀/디지털/AOD, 날씨, 달)
+│  ├─ Pix.mc                            픽셀 캐릭터·픽셀폰트·한글 날짜 그리기
+│  ├─ Smooth.mc                         디지털(벡터) 캐릭터 그리기
+│  ├─ Settings.mc                       설정 저장/불러오기
+│  └─ SettingsMenu.mc                   워치 자체 설정 메뉴
+├─ source-full/  source-store/          판별 캐릭터 데이터 (Sprites.mc 자동 생성, Assets.mc)
+├─ resources/  resources-kor/           공통 문자열(영/한)·아이콘
+├─ resources-full/  resources-full-kor/ 전체판 설정 정의·캐릭터 이름·외부 에셋
+├─ resources-store/                     스토어판 설정 정의
+├─ tools/gen_sprites.py                 캐릭터 그림 정의 → Sprites.mc / sprites.js / 아이콘 생성
+├─ tools/fetch_assets.py                외부 에셋 받기·가공 → Assets.mc / assets.js (커밋 안 함)
+├─ tools/check_resources.py, tools/check/   컴파일 없이 하는 검사
+├─ docs/store/                          스토어 제출 자료 (소개 문구, 아이콘, 스크린샷)
+└─ preview/index.html                   브라우저 미리보기
 ```
 
 ## 1. SDK 설치 (처음 한 번)
@@ -67,7 +70,9 @@ PowerShell에서 `garmin-character-face` 폴더로 이동한 뒤:
 .\build.ps1 -Run
 ```
 
-- 빌드 결과: `bin\PixelPals.prg`
+- 빌드 결과: `bin\PixelPals.prg` (전체판)
+- 스토어판: `.\build.ps1 -Store -Run` → `bin\MochiPixel.prg`, 업로드용 패키지는 `.\build.ps1 -Store -Release` → `bin\MochiPixel.iq`
+  (제출 자료는 [`docs/store/listing.md`](docs/store/listing.md))
 - 개발자 키: 기존 `keys\developer_key.der`를 그대로 씁니다. 없으면 자동으로 만듭니다.
 - 실행 정책 오류가 나면: `powershell -ExecutionPolicy Bypass -File .\build.ps1 -Run`
 
@@ -103,7 +108,7 @@ PowerShell에서 `garmin-character-face` 폴더로 이동한 뒤:
 - 에셋은 저작권이 있어 **저장소에 커밋하지 않습니다** (`.gitignore`). 이 저장소는 공개 저장소입니다.
 - 에셋을 구하지 못하면(오프라인, 파일 없음) 그 캐릭터는 벡터 그림으로 대신 그려서 빌드는 항상 됩니다.
 - 이미지 에셋은 표정이 하나라 깜빡임·하품은 없고, 들썩임과 수면 중 Zzz만 표시됩니다.
-- VS Code에서 바로 빌드하려면 먼저 `python tools/fetch_assets.py`를 한 번 실행해 `source/Assets.mc`를 만드세요.
+- VS Code에서 바로 빌드하려면 먼저 `python tools/fetch_assets.py`를 한 번 실행해 `source-full/Assets.mc`를 만드세요.
 
 **도롱이 이미지 넣기:** PC의 저장소 폴더에 `assets` 폴더를 만들고 도롱이 그림을 `dorongi.png`로 저장한 뒤 빌드하세요.
 전신이 보이고 배경이 흰색이거나 투명한 이미지면 됩니다.
@@ -155,9 +160,10 @@ SDK와 기기 파일은 Garmin 계정으로 로그인해야 받을 수 있어서
 - **디지털 캐릭터**: `SMOOTH` 목록에 원·타원·호·선 도형으로 그립니다 (100x100 상자, 발바닥 y=100).
 - **한글 글자**: `HANGUL`에 7x10 픽셀로 있습니다.
 
-수정한 뒤 `python tools/gen_sprites.py`를 실행하면 워치용 `source/Sprites.mc`와
+수정한 뒤 `python tools/gen_sprites.py`를 실행하면 워치용 `source-full/Sprites.mc`·`source-store/Sprites.mc`와
 미리보기용 `preview/sprites.js`가 함께 갱신됩니다 (`build.ps1`도 자동 실행).
-새 캐릭터를 추가하면 `Settings.mc`의 `CHARACTER_COUNT`·`COUNTS`, 문자열, `settings.xml` 목록도 늘려 주세요.
+새 캐릭터를 추가하면 캐릭터 정의에 `label`(이름 문자열 ID)을 넣고, `resources-full/settings/settings.xml` 목록과
+이름 문자열(`resources-full*/strings/characters.xml`)을 추가하세요. 오리지널 캐릭터라면 `"store": True`로 스토어판에도 넣을 수 있습니다.
 
 ## 참고
 

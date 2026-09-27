@@ -3,12 +3,14 @@
 #   .\build.ps1              # FR265S용 빌드 → bin\PixelPals.prg
 #   .\build.ps1 -Run         # 빌드 후 시뮬레이터 실행
 #   .\build.ps1 -Device fr265
-#   .\build.ps1 -Release     # 스토어 업로드용 .iq 패키지
+#   .\build.ps1 -Store       # 스토어판(모찌만) 빌드 → bin\MochiPixel.prg
+#   .\build.ps1 -Store -Release   # 스토어 업로드용 .iq 패키지 → bin\MochiPixel.iq
 #
 # 실행 정책 오류가 나면: powershell -ExecutionPolicy Bypass -File .\build.ps1
 param(
     [string]$Device = "fr265s",
     [switch]$Run,
+    [switch]$Store,
     [switch]$Release
 )
 $ErrorActionPreference = "Stop"
@@ -58,19 +60,25 @@ if (Get-Command python -ErrorAction SilentlyContinue) {
 
 New-Item -ItemType Directory -Force (Join-Path $root "bin") | Out-Null
 
+# 전체판(개인용, 포켓몬·도롱이 포함) / 스토어판(모찌만)
+if ($Store) { $jungle = "store.jungle"; $name = "MochiPixel" } else { $jungle = "monkey.jungle"; $name = "PixelPals" }
+if ($Release -and -not $Store) {
+    Write-Warning "전체판에는 포켓몬·도롱이가 들어 있어 스토어에 올리면 안 됩니다. 스토어용은 -Store -Release 를 쓰세요."
+}
+
 if ($Release) {
-    & "$bin\monkeyc.bat" -e -r -f monkey.jungle -o bin\PixelPals.iq -y $key -l 0 -w
+    & "$bin\monkeyc.bat" -e -r -f $jungle -o "bin\$name.iq" -y $key -l 0 -w
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    Write-Host "완료: bin\PixelPals.iq" -ForegroundColor Green
+    Write-Host "완료: bin\$name.iq" -ForegroundColor Green
     exit 0
 }
 
-& "$bin\monkeyc.bat" -f monkey.jungle -d $Device -o bin\PixelPals.prg -y $key -l 0 -w
+& "$bin\monkeyc.bat" -f $jungle -d $Device -o "bin\$name.prg" -y $key -l 0 -w
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-Write-Host "완료: bin\PixelPals.prg" -ForegroundColor Green
+Write-Host "완료: bin\$name.prg" -ForegroundColor Green
 
 if ($Run) {
     Start-Process "$bin\connectiq.bat"
     Start-Sleep -Seconds 4
-    & "$bin\monkeydo.bat" bin\PixelPals.prg $Device
+    & "$bin\monkeydo.bat" "bin\$name.prg" $Device
 }

@@ -1,0 +1,6 @@
+<strings>
+    <!-- 전체판 전용 캐릭터 이름 (스토어판에는 들어가지 않음) -->
+    <string id="CharSquirtle">꼬부기</string>
+    <string id="CharCharmander">파이리</string>
+    <string id="CharDorongi">도롱이</string>
+</strings>

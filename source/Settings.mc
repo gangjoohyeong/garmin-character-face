@@ -9,7 +9,7 @@ import Toybox.Time;
 module Settings {
     // 목록형 설정 인덱스
     const STYLE = 0;        // 0 픽셀아트, 1 디지털
-    const CHARACTER = 1;    // 0 모찌, 1 꼬부기, 2 파이리, 3 도롱이, 4 매일 랜덤
+    const CHARACTER = 1;    // 전체판: 0 모찌, 1 꼬부기, 2 파이리, 3 도롱이, 4 매일 랜덤 / 스토어판: 0 모찌
     const CHAR_STYLE = 2;   // 0 자동(워치페이스 스타일), 1 픽셀아트, 2 디지털
     const CHAR_SIZE = 3;    // 0 작게, 1 보통, 2 크게
     const BACKGROUND = 4;   // 0 자동(시간대), 1 아침, 2 낮, 3 저녁, 4 밤, 5 심플(검정)
@@ -38,7 +38,6 @@ module Settings {
     const DATA_TEMP = 9;
     const DATA_NOTIF = 10;
 
-    const CHARACTER_COUNT = 4;   // 실제 캐릭터 수 (랜덤 제외)
 
     var KEYS as Array<String> = ["Style", "Character", "CharStyle", "CharSize", "Background", "Accent",
         "TimeColor", "Ring", "Slot1", "Slot2", "Slot3", "Slot4", "SleepAt", "WakeAt", "DateLang"] as Array<String>;
@@ -53,6 +52,8 @@ module Settings {
     var weatherFx as Boolean = true;
 
     function load() as Void {
+        // 캐릭터 선택지 수는 빌드 판에 따라 다름 (전체판: 캐릭터 + 매일 랜덤, 스토어판: 모찌 1개)
+        COUNTS[CHARACTER] = Sprites.CHARACTER_COUNT > 1 ? Sprites.CHARACTER_COUNT + 1 : 1;
         for (var i = 0; i < LIST_COUNT; i++) {
             var v = getNum(KEYS[i], DEFAULTS[i]);
             vals[i] = (v < 0 || v >= COUNTS[i]) ? DEFAULTS[i] : v;
@@ -89,11 +90,11 @@ module Settings {
     // 실제로 그릴 캐릭터 (랜덤이면 날짜 기준으로 하루 동안 고정)
     function currentCharacter() as Number {
         var c = vals[CHARACTER];
-        if (c < CHARACTER_COUNT) {
+        if (c < Sprites.CHARACTER_COUNT) {
             return c;
         }
         var days = Time.now().value() / 86400;
-        return (days % CHARACTER_COUNT).toNumber();
+        return (days % Sprites.CHARACTER_COUNT).toNumber();
     }
 
     // 캐릭터를 부드러운(디지털) 그림으로 그릴지
@@ -135,8 +136,11 @@ module Settings {
         if (i == STYLE) {
             return [Rez.Strings.StylePixel, Rez.Strings.StyleDigital] as Array<ResourceId>;
         } else if (i == CHARACTER) {
-            return [Rez.Strings.CharMochi, Rez.Strings.CharSquirtle, Rez.Strings.CharCharmander,
-                    Rez.Strings.CharDorongi, Rez.Strings.CharRandom] as Array<ResourceId>;
+            var names = Sprites.characterNames();
+            if (names.size() > 1) {
+                names.add(Rez.Strings.CharRandom);
+            }
+            return names;
         } else if (i == CHAR_STYLE) {
             return [Rez.Strings.CharStyleAuto, Rez.Strings.StylePixel, Rez.Strings.StyleDigital] as Array<ResourceId>;
         } else if (i == CHAR_SIZE) {

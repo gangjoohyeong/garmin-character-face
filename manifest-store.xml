@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<iq:manifest version="3" xmlns:iq="http://www.garmin.com/xml/connectiq">
+    <iq:application id="feeeef9435a64567a7e3e082c59acaa2" type="watchface" name="@Strings.StoreAppName"
+        entry="MochiFaceApp" launcherIcon="@Drawables.LauncherIcon" minApiLevel="3.2.0" version="2.0.0">
+        <iq:products>
+            <iq:product id="fr265s"/>
+            <iq:product id="fr265"/>
+        </iq:products>
+        <iq:permissions>
+            <iq:uses-permission id="SensorHistory"/>
+        </iq:permissions>
+        <iq:languages>
+            <iq:language>eng</iq:language>
+            <iq:language>kor</iq:language>
+        </iq:languages>
+        <iq:barrels/>
+    </iq:application>
+</iq:manifest>

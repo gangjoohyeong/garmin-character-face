@@ -12,6 +12,9 @@ class SettingsMenu extends WatchUi.Menu2 {
                      Settings.SLOT1, Settings.SLOT2, Settings.SLOT3, Settings.SLOT4] as Array<Number>;
         for (var n = 0; n < order.size(); n++) {
             var i = order[n];
+            if (i == Settings.CHARACTER && Settings.COUNTS[i] <= 1) {
+                continue;   // 스토어판: 캐릭터가 하나뿐
+            }
             addItem(new WatchUi.MenuItem(Settings.title(i), Settings.label(i), i, null));
         }
         addItem(new WatchUi.ToggleMenuItem(Rez.Strings.DateTitle, null, :showDate, Settings.showDate, null));

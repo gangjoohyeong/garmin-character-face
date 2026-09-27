@@ -1,0 +1,19 @@
+<properties>
+    <property id="Style" type="number">0</property>
+    <property id="CharStyle" type="number">0</property>
+    <property id="CharSize" type="number">1</property>
+    <property id="Background" type="number">0</property>
+    <property id="Accent" type="number">0</property>
+    <property id="TimeColor" type="number">0</property>
+    <property id="Ring" type="number">0</property>
+    <property id="Slot1" type="number">1</property>
+    <property id="Slot2" type="number">4</property>
+    <property id="Slot3" type="number">2</property>
+    <property id="Slot4" type="number">3</property>
+    <property id="SleepAt" type="number">2</property>
+    <property id="WakeAt" type="number">1</property>
+    <property id="DateLang" type="number">0</property>
+    <property id="ShowDate" type="boolean">true</property>
+    <property id="Animate" type="boolean">true</property>
+    <property id="WeatherFx" type="boolean">true</property>
+</properties>

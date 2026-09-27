@@ -18,9 +18,9 @@ jobs:
       - name: Sprites.mc / sprites.js 가 생성기와 일치하는지
         run: |
           python tools/gen_sprites.py
-          git diff --exit-code -- source/Sprites.mc preview/sprites.js
+          git diff --exit-code -- source-full/Sprites.mc source-store/Sprites.mc preview/sprites.js
       - name: 에셋 스크립트 (Pillow 없이 대체 파일 생성)
-        run: python tools/fetch_assets.py && test -f source/Assets.mc
+        run: python tools/fetch_assets.py && test -f source-full/Assets.mc
       - name: 미리보기 JS 문법 검사
         run: node --check preview/watchface.js
       - name: 리소스 교차 검사
@@ -32,7 +32,7 @@ jobs:
         working-directory: tools/check
         run: |
           npm ci
-          npm run lint
+          npm run lint && node lint_mc.mjs ../../source-full && node lint_mc.mjs ../../source-store
 
   # Connect IQ SDK 로 실제 컴파일 (GARMIN_USERNAME / GARMIN_PASSWORD 비밀값 필요)
   build:
@@ -89,14 +89,22 @@ jobs:
           openssl genrsa -out keys/ci.pem 4096 2>/dev/null
           openssl pkcs8 -topk8 -inform PEM -outform DER -in keys/ci.pem -out keys/ci.der -nocrypt
           for d in fr265s fr265; do
-            echo "::group::$d"
+            echo "::group::전체판 $d"
             monkeyc -f monkey.jungle -d "$d" -o "bin/PixelPals-$d.prg" -y keys/ci.der -l 0 -w
             echo "::endgroup::"
+            echo "::group::스토어판 $d"
+            monkeyc -f store.jungle -d "$d" -o "bin/MochiPixel-$d.prg" -y keys/ci.der -l 0 -w
+            echo "::endgroup::"
           done
+          echo "::group::스토어 패키지"
+          monkeyc -e -r -f store.jungle -o bin/MochiPixel.iq -y keys/ci.der -l 0 -w
+          echo "::endgroup::"
 
       - name: .prg 업로드
         if: steps.secrets.outputs.ok == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: PixelPals-prg
-          path: bin/*.prg
+          name: PixelPals-builds
+          path: |
+            bin/*.prg
+            bin/*.iq

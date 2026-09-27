@@ -2,7 +2,11 @@
 import Toybox.Lang;
 
 module Sprites {
-    // 캐릭터: 0 모찌, 1 꼬부기, 2 파이리, 3 도롱이
+    // 캐릭터: 0 mochi, 1 squirtle, 2 charmander, 3 dorongi
+    const CHARACTER_COUNT = 4;
+    function characterNames() as Array<ResourceId> {
+        return [Rez.Strings.CharMochi, Rez.Strings.CharSquirtle, Rez.Strings.CharCharmander, Rez.Strings.CharDorongi] as Array<ResourceId>;
+    }
     var W as Array<Number> = [22, 22, 22, 26] as Array<Number>;
     var H as Array<Number> = [19, 21, 21, 25] as Array<Number>;
     var HEAD as Array = [[4, 16], [1, 17], [0, 15], [1, 20]] as Array;

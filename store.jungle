@@ -1,0 +1,6 @@
+# 스토어판 (Connect IQ 스토어 공개용): 오리지널 캐릭터 모찌만
+#   monkeyc -f store.jungle ...   (build.ps1 -Store)
+project.manifest = manifest-store.xml
+base.sourcePath = source;source-store
+base.resourcePath = resources;resources-store
+base.lang.kor = resources-kor
