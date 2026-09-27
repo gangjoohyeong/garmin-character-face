@@ -27,7 +27,9 @@ Forerunner 265S/265용 픽셀 캐릭터 워치페이스. Monkey C.
 
 ## 빌드/검증
 - 클라우드 세션에서는 Garmin 서버가 막혀 SDK를 설치할 수 없다. 실제 컴파일은 GitHub Actions(`.github/workflows/build.yml`,
-  비밀값 `GARMIN_USERNAME`/`GARMIN_PASSWORD`)나 사용자 PC(`build.ps1`)에서 한다.
+  비밀값 `GARMIN_USERNAME`/`GARMIN_PASSWORD` 등록됨)나 사용자 PC(`build.ps1`)에서 한다.
+- CI 결과는 로그인 없이 공개 API로 확인한다: `actions/runs?head_sha=<sha>` → `runs/<id>/jobs` → `check-runs/<job id>/annotations`.
+  컴파일 단계가 monkeyc의 ERROR/WARNING 줄과 단계별 "성공"을 annotation으로 남긴다.
 - 로컬에서 확인 가능한 것: `python3 tools/gen_sprites.py`, `node --check preview/watchface.js`, Playwright로 `preview/index.html` 렌더링.
 - 미리보기 아티팩트: https://claude.ai/artifact/Wind66oE6g2tE6cQ7jFWqY (preview/index.html + sprites.js + watchface.js)
 

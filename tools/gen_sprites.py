@@ -462,7 +462,7 @@ def write_png(path, pix):
                 + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b""))
 
 
-def write_icon(c, path, size=70, s=3):
+def write_icon(c, path, size=60, s=2):   # FR265S/265 런처 아이콘 규격 60x60
     """앱 아이콘: 하늘색 원 위에 캐릭터."""
     pix = [[(0, 0, 0, 0)] * size for _ in range(size)]
     r = size / 2

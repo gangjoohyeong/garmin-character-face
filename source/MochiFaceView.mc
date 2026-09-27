@@ -298,7 +298,6 @@ class MochiFaceView extends WatchUi.WatchFace {
             var head = Sprites.SM_HEAD[ci] as Array<Number>;
             return [x + head[1] * size / 100, y + head[0] * size / 100] as Array<Number>;
         }
-        var w = (Sprites.W[ci] as Number) * s;
         var h = (Sprites.H[ci] as Number) * s;
         var px = cx - (Sprites.ANCHOR2[ci] as Number) * s / 2;
         var py = baseline - h;
