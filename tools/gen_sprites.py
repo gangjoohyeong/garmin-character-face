@@ -167,6 +167,7 @@ CHARMANDER = {
         "small": [(10, 9, "KKK")],
     },
     "head": (0, 15),
+    "anchor": 10,         # 몸 중심 열 (머리 2~18열, 꼬리 불꽃 제외)
 }
 
 
@@ -245,6 +246,7 @@ DORONGI = {
         "small": [(7, 11, "KK")],
     },
     "head": (1, 20),
+    "anchor": 11.5,       # 몸 중심 열 (꼬리 제외)
 }
 
 CHARACTERS = [MOCHI, SQUIRTLE, CHARMANDER, DORONGI]
@@ -446,6 +448,8 @@ def build_character(ch):
         "face": [runs_of(f, keys, base) for f in frames[1:]],
         "extra": [],
         "head": list(ch["head"]),
+        # 가로 기준점 (반 칸 단위). 기본은 가운데, 꼬리가 있으면 몸 중심.
+        "anchor2": int(round(ch.get("anchor", (w - 1) / 2) * 2)) + 1,
     }
     if "extra" in ch:
         ex = apply(base, ch["extra"])
@@ -621,6 +625,8 @@ def emit_monkeyc(path, chars, smooth, font, names, labels):
     L.append("    var W as Array<Number> = %s as Array<Number>;" % arr([c["w"] for c in chars]))
     L.append("    var H as Array<Number> = %s as Array<Number>;" % arr([c["h"] for c in chars]))
     L.append("    var HEAD as Array = [%s] as Array;" % ", ".join(arr(c["head"]) for c in chars))
+    L.append("    // 가로 기준점 (반 칸 단위): 몸 중심이 화면 가운데에 오도록")
+    L.append("    var ANCHOR2 as Array<Number> = %s as Array<Number>;" % arr([c["anchor2"] for c in chars]))
     L.append("    var PAL as Array = [")
     for c in chars:
         L.append("        %s," % hexarr(c["pal"]))

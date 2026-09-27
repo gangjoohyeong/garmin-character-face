@@ -10,6 +10,8 @@ module Sprites {
     var W as Array<Number> = [22, 22, 22, 26] as Array<Number>;
     var H as Array<Number> = [19, 21, 21, 25] as Array<Number>;
     var HEAD as Array = [[4, 16], [1, 17], [0, 15], [1, 20]] as Array;
+    // 가로 기준점 (반 칸 단위): 몸 중심이 화면 가운데에 오도록
+    var ANCHOR2 as Array<Number> = [22, 22, 21, 24] as Array<Number>;
     var PAL as Array = [
         [0x000000, 0x2B2B3A, 0xFFF8EE, 0xE6D5C3, 0xFF9BB3, 0x6CC56C, 0xE0506A],
         [0x000000, 0x23303D, 0x7FCBEA, 0x4E9FC6, 0xB8733A, 0xF5E3A3, 0xDCC47E, 0x4A1C1C, 0xFFFFFF, 0xE0506A],

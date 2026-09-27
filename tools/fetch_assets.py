@@ -97,21 +97,32 @@ def remove_white_background(img):
 
 
 def fit(img, box):
-    """투명 여백을 자르고 box x box 안에 비율 유지로 맞춤 (아래 가운데 정렬)."""
+    """투명 여백을 자르고 box x box 안에 맞춤 (아래 정렬).
+    가로 위치는 전체 폭이 아니라 머리 쪽(위 40%)의 무게중심을 상자 가운데에 둔다.
+    그래야 꼬리·불꽃이 한쪽으로 뻗은 캐릭터도 몸이 가운데로 온다."""
     from PIL import Image
     bbox = img.getbbox()
     if bbox:
         img = img.crop(bbox)
     w, h = img.size
-    k = min(box / w, box / h)
+    a = img.split()[3].load()
+    xs = n = 0
+    for y in range(int(h * 0.4)):
+        for x in range(w):
+            if a[x, y] >= 128:
+                xs += x
+                n += 1
+    cx = xs / n if n else w / 2
+    half = max(cx, w - cx)                 # 기준점에서 먼 쪽 끝까지
+    k = min(box / (2 * half), box / h)
     nw, nh = max(1, round(w * k)), max(1, round(h * k))
     img = img.resize((nw, nh), Image.LANCZOS)
     # 워치에서 반투명 가장자리가 번지지 않게 알파를 0/255 로
-    r, g, b, a = img.split()
-    a = a.point(lambda v: 255 if v >= 128 else 0)
-    img = Image.merge("RGBA", (r, g, b, a))
+    r, g, b, al = img.split()
+    al = al.point(lambda v: 255 if v >= 128 else 0)
+    img = Image.merge("RGBA", (r, g, b, al))
     out = Image.new("RGBA", (box, box), (0, 0, 0, 0))
-    out.paste(img, ((box - nw) // 2, box - nh), img)
+    out.paste(img, (round(box / 2 - cx * k), box - nh), img)
     return out
 
 

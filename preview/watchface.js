@@ -232,7 +232,7 @@
         const hd = S.smooth[ci].head;
         return [x + T(hd[1] * size / 100), y + T(hd[0] * size / 100)];
       }
-      const ch = S.chars[ci], w = ch.w * s, h = ch.h * s, px = cx - T(w / 2), py = baseline - h;
+      const ch = S.chars[ci], h = ch.h * s, px = cx - T(ch.anchor2 * s / 2), py = baseline - h;
       Pix.drawCharacter(dc, ci, frame, px, py + bob, s, flicker, override);
       return [px + ch.head[1] * s, py + ch.head[0] * s];
     }

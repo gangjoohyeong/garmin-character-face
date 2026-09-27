@@ -279,7 +279,7 @@ class MochiFaceView extends WatchUi.WatchFace {
         }
         var w = (Sprites.W[ci] as Number) * s;
         var h = (Sprites.H[ci] as Number) * s;
-        var px = cx - w / 2;
+        var px = cx - (Sprites.ANCHOR2[ci] as Number) * s / 2;
         var py = baseline - h;
         Pix.drawCharacter(dc, ci, frame, px, py + bob, s, flicker, override);
         var hd = Sprites.HEAD[ci] as Array<Number>;
