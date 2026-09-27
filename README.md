@@ -73,6 +73,24 @@ PowerShell에서 `garmin-character-face` 폴더로 이동한 뒤:
 4. 케이블을 뽑으면 워치가 앱을 설치합니다.
 5. 워치에서 시계 화면을 길게 누르기 → **워치 페이스** → **Pixel Pals(픽셀 친구들)** 선택.
 
+## CI 자동 빌드 (GitHub Actions)
+
+`main`에 푸시하거나 PR을 열면 `.github/workflows/build.yml`이 실행됩니다.
+
+- **check**: 스프라이트 생성 결과가 커밋된 파일과 같은지, 미리보기 JS 문법이 맞는지 검사합니다. 설정 없이 항상 돕니다.
+- **build**: Connect IQ SDK를 받아 FR265S / FR265용으로 실제 컴파일하고, `.prg` 파일을 Actions 결과물(`PixelPals-prg`)로 올립니다.
+  이 결과물을 받아 바로 워치에 복사해도 됩니다.
+
+build 작업을 켜려면 저장소 **Settings → Secrets and variables → Actions → New repository secret**에서 두 값을 등록하세요.
+
+| 이름 | 값 |
+|---|---|
+| `GARMIN_USERNAME` | Garmin 계정 이메일 |
+| `GARMIN_PASSWORD` | Garmin 계정 비밀번호 |
+
+SDK와 기기 파일은 Garmin 계정으로 로그인해야 받을 수 있어서 필요합니다. 비밀값이 없으면 build 작업은 경고만 남기고 건너뜁니다.
+계정에 2단계 인증이 켜져 있으면 로그인이 실패할 수 있습니다.
+
 ## 4. 설정 바꾸는 방법
 
 - **워치에서**: 시계 화면 길게 누르기 → 워치 페이스 → Pixel Pals → **사용자 지정(Customize)**

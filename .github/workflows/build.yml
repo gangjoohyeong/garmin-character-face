@@ -1,0 +1,79 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  # 비밀값 없이도 도는 기본 검사
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Sprites.mc / sprites.js 가 생성기와 일치하는지
+        run: |
+          python tools/gen_sprites.py
+          git diff --exit-code -- source/Sprites.mc preview/sprites.js
+      - name: 미리보기 JS 문법 검사
+        run: node --check preview/watchface.js
+
+  # Connect IQ SDK 로 실제 컴파일 (GARMIN_USERNAME / GARMIN_PASSWORD 비밀값 필요)
+  build:
+    runs-on: ubuntu-latest
+    needs: check
+    env:
+      GARMIN_USERNAME: ${{ secrets.GARMIN_USERNAME }}
+      GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 비밀값 확인
+        id: secrets
+        run: |
+          if [ -z "$GARMIN_USERNAME" ] || [ -z "$GARMIN_PASSWORD" ]; then
+            echo "::warning::GARMIN_USERNAME / GARMIN_PASSWORD 비밀값이 없어 컴파일을 건너뜁니다. README의 'CI 자동 빌드'를 참고하세요."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-java@v4
+        if: steps.secrets.outputs.ok == 'true'
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: SDK / 기기 파일 받기
+        if: steps.secrets.outputs.ok == 'true'
+        run: |
+          curl -s https://raw.githubusercontent.com/lindell/connect-iq-sdk-manager-cli/master/install.sh | sh -s -- -b "$HOME/.local/bin"
+          export PATH="$HOME/.local/bin:$PATH"
+          connect-iq-sdk-manager agreement accept
+          connect-iq-sdk-manager login
+          connect-iq-sdk-manager sdk set "^8"
+          connect-iq-sdk-manager device download --manifest=manifest.xml
+          echo "$(connect-iq-sdk-manager sdk current-path --bin)" >> "$GITHUB_PATH"
+
+      - name: 컴파일
+        if: steps.secrets.outputs.ok == 'true'
+        run: |
+          mkdir -p keys bin
+          openssl genrsa -out keys/ci.pem 4096 2>/dev/null
+          openssl pkcs8 -topk8 -inform PEM -outform DER -in keys/ci.pem -out keys/ci.der -nocrypt
+          for d in fr265s fr265; do
+            echo "::group::$d"
+            monkeyc -f monkey.jungle -d "$d" -o "bin/PixelPals-$d.prg" -y keys/ci.der -l 0 -w
+            echo "::endgroup::"
+          done
+
+      - name: .prg 업로드
+        if: steps.secrets.outputs.ok == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: PixelPals-prg
+          path: bin/*.prg

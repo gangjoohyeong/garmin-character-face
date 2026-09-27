@@ -45,29 +45,29 @@ class MochiFaceView extends WatchUi.WatchFace {
         [0x3FA9F5, 0x5AB8F7, 0x75C6F9, 0x90D3FB, 0xABE0FD, 0xC6ECFF],   // 낮
         [0x3A2C6E, 0x6A3A7E, 0x9C4A7E, 0xCF5F6E, 0xF08A5D, 0xFFB26B],   // 저녁
         [0x070B24, 0x0C1433, 0x121C42, 0x182552, 0x1F2E61, 0x273870]    // 밤
-    ];
+    ] as Array;
     // [언덕, 잔디 윗줄, 잔디, 잔디 어두운 점]
     private var _grass as Array = [
         [0xC9A3C8, 0xA8E08C, 0x7FC96A, 0x5FA84F],
         [0x6FAFD8, 0x9BE07A, 0x6CCB4E, 0x4FA63A],
         [0x7A4A7E, 0x8FA35A, 0x6E8544, 0x546A33],
         [0x1A2350, 0x2F6A4A, 0x214F37, 0x173B29]
-    ];
-    private var _cloud as Array<Number> = [0xFFF4F6, 0xFFFFFF, 0xF6B8A0, 0x000000];
-    private var _sunColor as Array<Number> = [0xFFD66B, 0xFFE45C, 0xFF7A45, 0xFFF2B0];
+    ] as Array;
+    private var _cloud as Array<Number> = [0xFFF4F6, 0xFFFFFF, 0xF6B8A0, 0x000000] as Array<Number>;
+    private var _sunColor as Array<Number> = [0xFFD66B, 0xFFE45C, 0xFF7A45, 0xFFF2B0] as Array<Number>;
     // 디지털 스타일 배경 / 강조색 (마지막 = 심플)
-    private var _digBg as Array<Number> = [0x2A1B2E, 0x0E2238, 0x26142F, 0x05060D, 0x000000];
-    private var _digHill as Array<Number> = [0x3A2640, 0x16324F, 0x351C40, 0x0C0F1E, 0x111111];
-    private var _digAccent as Array<Number> = [0xFF9BB3, 0x4FC3F7, 0xFF8A50, 0xB39DDB, 0xFFD23F];
+    private var _digBg as Array<Number> = [0x2A1B2E, 0x0E2238, 0x26142F, 0x05060D, 0x000000] as Array<Number>;
+    private var _digHill as Array<Number> = [0x3A2640, 0x16324F, 0x351C40, 0x0C0F1E, 0x111111] as Array<Number>;
+    private var _digAccent as Array<Number> = [0xFF9BB3, 0x4FC3F7, 0xFF8A50, 0xB39DDB, 0xFFD23F] as Array<Number>;
 
     private var _stars as Array<Number> = [
         70, 110, 110, 70, 150, 150, 230, 60, 300, 110, 50, 190,
         320, 190, 200, 20, 260, 140, 95, 160, 140, 40, 285, 60
-    ];
+    ] as Array<Number>;
 
-    private var _days as Array<String> = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+    private var _days as Array<String> = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"] as Array<String>;
     private var _months as Array<String> = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
-                                            "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+                                            "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"] as Array<String>;
 
     function initialize() {
         WatchFace.initialize();
