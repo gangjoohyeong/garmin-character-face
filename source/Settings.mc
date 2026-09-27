@@ -9,7 +9,7 @@ import Toybox.Time;
 module Settings {
     // 목록형 설정 인덱스
     const STYLE = 0;        // 0 픽셀아트, 1 디지털
-    const CHARACTER = 1;    // 전체판: 0 모찌, 1 꼬부기, 2 파이리, 3 도롱이, 4 매일 랜덤 / 스토어판: 0 모찌
+    const CHARACTER = 1;    // 전체판: 0 모찌, 1 도롱이, 2 매일 랜덤 / 스토어판: 0 모찌
     const CHAR_STYLE = 2;   // 0 자동(워치페이스 스타일), 1 픽셀아트, 2 디지털
     const CHAR_SIZE = 3;    // 0 작게, 1 보통, 2 크게
     const BACKGROUND = 4;   // 0 자동(시간대), 1 아침, 2 낮, 3 저녁, 4 밤, 5 심플(검정)

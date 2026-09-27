@@ -5,7 +5,6 @@
 디지털 캐릭터 스타일에서 쓰는 비트맵을 만든다. 에셋은 저작권이 있으므로 저장소에 커밋하지 않고
 빌드할 때마다 이 스크립트로 받아서 만든다 (결과물은 .gitignore 대상).
 
-  - 꼬부기 / 파이리 : PokeAPI 스프라이트 저장소의 공식 아트를 내려받음
   - 도롱이          : assets/dorongi.png (직접 넣어 둔 파일, 흰 배경이면 자동으로 지움)
   - 모찌            : 오리지널 캐릭터라 벡터 그림을 그대로 씀
 
@@ -30,11 +29,10 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CACHE = os.path.join(ROOT, "assets", "cache")
 OUT_DIR = os.path.join(ROOT, "resources-full", "drawables", "assets")
 
-# 캐릭터 인덱스 -> 에셋 정보 (0 모찌는 없음)
+# 캐릭터 인덱스 -> 에셋 정보 (0 모찌는 벡터 그림이라 없음)
+#   "url" 이 있으면 내려받아 assets/cache 에 두고, "file" 이면 저장소의 파일을 씀
 SOURCES = {
-    1: {"name": "squirtle", "url": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/7.png"},
-    2: {"name": "charmander", "url": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/4.png"},
-    3: {"name": "dorongi", "file": os.path.join(ROOT, "assets", "dorongi.png"), "faces": True},
+    1: {"name": "dorongi", "file": os.path.join(ROOT, "assets", "dorongi.png"), "faces": True},
 }
 SCALES = [3, 4, 5, 6]          # 워치 코드의 캐릭터 배율 (상자 한 변 = 배율 * 22px)
 AOD_SCALE = 3

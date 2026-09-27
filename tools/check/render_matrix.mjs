@@ -40,7 +40,7 @@ const result = await page.evaluate(() => {
   const area = Math.PI * 180 * 180;
   // ---- AOD ----
   const aod = [];
-  for (const style of [0, 1]) for (let character = 0; character < 4; character++) for (const charStyle of [1, 2]) {
+  for (const style of [0, 1]) for (let character = 0; character < 2; character++) for (const charStyle of [1, 2]) {
     let maxRatio = 0, maxLum = 0, overlap = 0;
     let prev = null;
     for (let min = 0; min < 12; min++) {
@@ -65,7 +65,7 @@ const result = await page.evaluate(() => {
     const undo = ['fillRect', 'fill', 'stroke', 'fillText', 'drawImage'].map(wrap);
     for (const style of [0, 1]) for (const charStyle of [1, 2]) for (let background = 0; background < 6; background++) {
       let max = 0;
-      for (let character = 0; character < 4; character++) {
+      for (let character = 0; character < 2; character++) {
         n = 0; draw({ ...base, style, character, charStyle, background, hour: background === 4 ? 23 : 13 });
         max = Math.max(max, n - 1);   // 바탕 지우기 1회 제외
       }
@@ -87,23 +87,23 @@ const result = await page.evaluate(() => {
     });
     sheets[name] = sc.toDataURL('image/png');
   }
-  const N = ['mochi', 'squirtle', 'charm', 'dorongi'];
+  const N = ['mochi', 'dorongi'];
   for (const style of [0, 1]) {
     const list = [];
-    for (let character = 0; character < 4; character++) for (const charStyle of [1, 2]) for (const charSize of [0, 1, 2])
+    for (let character = 0; character < 2; character++) for (const charStyle of [1, 2]) for (const charSize of [0, 1, 2])
       list.push({ label: `${N[character]} ${charStyle === 1 ? 'pix' : 'dig'} size${charSize}`, st: { style, character, charStyle, charSize } });
     sheet('sheet-style' + style + '-characters', list);
     const list2 = [];
     for (let background = 0; background < 6; background++) for (const is24 of [true, false])
       list2.push({ label: `bg${background} ${is24 ? '24h' : '12h'} ${background % 2 ? 'en' : 'ko'}`,
-        st: { style, background, is24, hour: 21, dateLang: background % 2 ? 1 : 2, character: background % 4, showDate: background !== 4 } });
+        st: { style, background, is24, hour: 21, dateLang: background % 2 ? 1 : 2, character: background % 2, showDate: background !== 4 } });
     sheet('sheet-style' + style + '-backgrounds', list2);
   }
   // 날씨 / 달의 위상 / 새 정보 칸
   const wxList = [];
   for (const style of [0, 1]) for (const wx of [-1, 1, 2, 3]) {
     wxList.push({ label: `s${style} wx${wx} day`, st: { style, wx, hour: 13, animate: true, sec: 7, slots: [9, 10, 1, 9], character: 1 } });
-    wxList.push({ label: `s${style} wx${wx} night`, st: { style, wx, hour: 21, animate: true, sec: 7, slots: [9, 10, 1, 9], character: 2 } });
+    wxList.push({ label: `s${style} wx${wx} night`, st: { style, wx, hour: 21, animate: true, sec: 7, slots: [9, 10, 1, 9], character: 0 } });
   }
   sheet('sheet-weather', wxList);
   const moonList = [];
@@ -116,9 +116,9 @@ const result = await page.evaluate(() => {
   const SN = ['meadow', 'sea', 'city', 'snow', 'cherry', 'autumn', 'space'];
   for (let scenery = 0; scenery < 7; scenery++) {
     for (const [hour, tn] of [[7, 'morn'], [13, 'day'], [18, 'eve'], [21, 'night']])
-      scnList.push({ label: `${SN[scenery]} ${tn}`, st: { scenery, hour, character: scenery % 4, animate: true, sec: 5 } });
-    scnList.push({ label: `${SN[scenery]} digital`, st: { scenery, hour: 13, style: 1, character: scenery % 4 } });
-    scnList.push({ label: `${SN[scenery]} dig night`, st: { scenery, hour: 21, style: 1, character: scenery % 4 } });
+      scnList.push({ label: `${SN[scenery]} ${tn}`, st: { scenery, hour, character: scenery % 2, animate: true, sec: 5 } });
+    scnList.push({ label: `${SN[scenery]} digital`, st: { scenery, hour: 13, style: 1, character: scenery % 2 } });
+    scnList.push({ label: `${SN[scenery]} dig night`, st: { scenery, hour: 21, style: 1, character: scenery % 2 } });
   }
   sheet('sheet-scenery', scnList);
   return { aod, sheets, calls };
@@ -132,7 +132,7 @@ for (const r of result.aod) {
   if (bad) fail++;
   console.log(`${r.style}     ${r.character}     ${r.charStyle === 1 ? 'pixel  ' : 'digital'}    ${(r.maxRatio * 100).toFixed(1).padStart(5)}%   ${(r.maxLum * 100).toFixed(1).padStart(5)}%   ${String(r.overlap).padStart(5)}${bad ? '  <-- 문제' : ''}`);
 }
-console.log('\n그리기 호출 수 (화면 1회, 캐릭터 4종 중 최댓값)');
+console.log('\n그리기 호출 수 (화면 1회, 캐릭터 중 최댓값)');
 for (const c of result.calls) {
   console.log(`style ${c.style} ${c.charStyle === 1 ? 'pixel  ' : 'digital'} bg${c.background}: ${c.max}`);
 }

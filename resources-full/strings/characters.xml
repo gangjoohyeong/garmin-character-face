@@ -1,6 +1,4 @@
 <strings>
     <!-- 전체판 전용 캐릭터 이름 (스토어판에는 들어가지 않음) -->
-    <string id="CharSquirtle">Squirtle</string>
-    <string id="CharCharmander">Charmander</string>
     <string id="CharDorongi">Dorongi</string>
 </strings>

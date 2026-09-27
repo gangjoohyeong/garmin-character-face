@@ -138,7 +138,7 @@
 
   <section class="gallery">
     <h2>All pals</h2>
-    <p>워치페이스 스타일 2종 × 캐릭터 4종. 누르면 위 미리보기에 적용됩니다. 나머지 설정은 위에서 고른 값을 따릅니다.</p>
+    <p>워치페이스 스타일 2종 × 캐릭터 2종. 누르면 위 미리보기에 적용됩니다. 나머지 설정은 위에서 고른 값을 따릅니다.</p>
     <div class="grid" id="grid"></div>
   </section>
 </div>
@@ -150,7 +150,7 @@
 (function () {
   const $ = id => document.getElementById(id);
   const DATA = ['없음', '심박', 'Body Battery', '걸음', '배터리', '칼로리', '거리', '오른 층수', '스트레스', '기온', '알림'];
-  const NAMES = ['모찌', '꼬부기', '파이리', '도롱이'];
+  const NAMES = ['모찌', '도롱이'];
   const STYLE_NAMES = ['픽셀아트', '디지털'];
   const ACCENT_HEX = [null, '#FF9BB3', '#4FC3F7', '#FF8A50', '#64E3B4', '#B39DDB', '#FFD23F'];
 
@@ -295,7 +295,7 @@
     $('stressOut').textContent = st.stress;
     $('tempOut').textContent = st.temp == null ? '--' : st.temp + '°';
     $('notifOut').textContent = st.notif;
-    const who = st.character < 4 ? NAMES[st.character] : NAMES[st.day % 4] + ' (랜덤)';
+    const who = st.character < NAMES.length ? NAMES[st.character] : NAMES[st.day % NAMES.length] + ' (랜덤)';
     const cs = st.charStyle === 0 ? STYLE_NAMES[st.style] : STYLE_NAMES[st.charStyle - 1];
     $('readout').textContent = STYLE_NAMES[st.style] + ' · ' + who + ' (' + cs + ')' + (st.aod ? ' · AOD' : '');
   }

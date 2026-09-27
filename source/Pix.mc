@@ -43,7 +43,7 @@ module Pix {
     }
 
     // 캐릭터 1프레임 그리기
-    //   frame: 0 기본, 1 깜빡, 2 하품, 3 수면 / flicker: 파이리 불꽃 깜빡임
+    //   frame: 0 기본, 1 깜빡, 2 하품, 3 수면 / flicker: 깜빡이는 부분(EXTRA)을 덧그림
     function drawCharacter(dc as Dc, ci as Number, frame as Number, x as Number, y as Number,
                            s as Number, flicker as Boolean, override as Number) as Void {
         var pal = Sprites.PAL[ci] as Array;

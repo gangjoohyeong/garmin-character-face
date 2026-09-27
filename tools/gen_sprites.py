@@ -72,106 +72,6 @@ MOCHI = {
     "head": (4, 16),          # 머리 위 기준점 (row, col) - Zzz 위치용
 }
 
-SQUIRTLE = {
-    "name": "squirtle",
-    "label": "CharSquirtle",
-    "palette": {
-        "K": 0x23303D, "B": 0x7FCBEA, "b": 0x4E9FC6, "S": 0xB8733A,
-        "Y": 0xF5E3A3, "y": 0xDCC47E, "E": 0x4A1C1C, "W": 0xFFFFFF,
-        "R": 0xE0506A,
-    },
-    "grid": [
-        "......KKKKKKKKKK......",
-        "....KKBBBBBBBBBBKK....",
-        "...KBBBBBBBBBBBBBBK...",
-        "..KBBBBBBBBBBBBBBBBK..",
-        "..KBBBBBBBBBBBBBBBBK..",
-        ".KBBBBBBBBBBBBBBBBBBK.",
-        ".KBBBBBBBBBBBBBBBBBBK.",
-        ".KBBBBBBBBBBBBBBBBBBK.",
-        ".KBBBBBBBBBBBBBBBBBBK.",
-        "..KBBBBBBBBBBBBBBBBK..",
-        "..KbBBBBBBBBBBBBBBbK..",
-        "...KKbbBBBBBBBBbbKK...",
-        "..KSSKKKKKKKKKKKKSSK..",
-        ".KBKSSYYYYYYYYYYSSKBK.",
-        "KBBKSYYYYYYYYYYYYSKBBK",
-        "KBBKSyyyyyyyyyyyySKBBK",
-        ".KKKSYYYYYYYYYYYYSKKK.",
-        "...KSSYYYYYYYYYYSSK...",
-        "...KBBSSSSSSSSSSBBK...",
-        "..KBBBBK......KBBBBK..",
-        "..KKKKKK......KKKKKK..",
-    ],
-    "common": [],
-    "eyes": {
-        "open":  [(5, 5, "EEE"), (6, 5, "EWE"), (7, 5, "EEE"), (8, 5, "EEE"),
-                  (5, 14, "EEE"), (6, 14, "EWE"), (7, 14, "EEE"), (8, 14, "EEE")],
-        "blink": [(7, 5, "KKK"), (7, 14, "KKK")],
-        "sleep": [(7, 5, "K_K"), (8, 6, "K"), (7, 14, "K_K"), (8, 15, "K")],
-        "happy": [(6, 6, "K"), (7, 5, "K_K"), (6, 15, "K"), (7, 14, "K_K")],
-    },
-    "mouths": {
-        "smile": [(9, 9, "K__K"), (10, 10, "KK")],
-        "yawn":  [(9, 10, "KK"), (10, 9, "KRRK"), (11, 10, "KK")],
-        "small": [(10, 10, "KK")],
-    },
-    "head": (1, 17),
-}
-
-CHARMANDER = {
-    "name": "charmander",
-    "label": "CharCharmander",
-    "palette": {
-        "K": 0x3A2320, "O": 0xF4893A, "o": 0xCF6420, "Y": 0xF7E08A,
-        "R": 0xE8402A, "F": 0xFFD23F, "W": 0xFFFFFF, "M": 0xC8324A,
-    },
-    "grid": [
-        ".......KKKKKKK........",
-        ".....KKOOOOOOOKK......",
-        "....KOOOOOOOOOOOK.....",
-        "...KOOOOOOOOOOOOOK....",
-        "...KOOOOOOOOOOOOOK....",
-        "..KOOOOOOOOOOOOOOOK...",
-        "..KOOOOOOOOOOOOOOOK...",
-        "..KOOOOOOOOOOOOOOOK...",
-        "..KOOOOOOOOOOOOOOOK...",
-        "...KOOOOOOOOOOOOOK....",
-        "...KoOOOOOOOOOOOoK....",
-        "....KKooOOOOOooKK.....",
-        "...KOOKKKKKKKKKOOK....",
-        "..KOKOYYYYYYYYOKOKKOK.",
-        ".KOOKOYYYYYYYYYOKOOOK.",
-        ".KOOKOYYYYYYYYYOKOOK..",
-        "..KKKOYYYYYYYYYOKKK...",
-        "....KOOYYYYYYYOOKK....",
-        "....KOOOOOOOOOOOK.....",
-        "...KOOOOK...KOOOOK....",
-        "...KKKKKK...KKKKKK....",
-    ],
-    # 꼬리 불꽃 (A = 기본, B = 깜빡임 - 모양은 같고 색만 다름)
-    "common": [(7, 20, "R"), (8, 19, "RR"), (9, 19, "RFR"), (10, 19, "RFR"),
-               (11, 19, "RFR"), (12, 19, "RR")],
-    "extra": [(7, 20, "F"), (8, 19, "RF"), (9, 19, "FFR"), (10, 19, "RFF"),
-              (11, 19, "FFR"), (12, 19, "FR")],
-    "eyes": {
-        "open":  [(5, 6, "KW"), (6, 6, "KK"), (7, 6, "KK"),
-                  (5, 13, "KW"), (6, 13, "KK"), (7, 13, "KK")],
-        "blink": [(7, 6, "KK"), (7, 13, "KK")],
-        "sleep": [(6, 5, "K__K"), (7, 6, "KK"), (6, 12, "K__K"), (7, 13, "KK")],
-        "happy": [(5, 6, "KK"), (6, 5, "K__K"), (5, 13, "KK"), (6, 12, "K__K")],
-    },
-    "mouths": {
-        "smile": [(9, 8, "K___K"), (10, 9, "KKK")],
-        "yawn":  [(9, 9, "KKK"), (10, 8, "KMMMK"), (11, 9, "KKK")],
-        "small": [(10, 9, "KKK")],
-    },
-    "head": (0, 15),
-    "anchor": 10,         # 몸 중심 열 (머리 2~18열, 꼬리 불꽃 제외)
-}
-
-
-
 def build_dorongi_grid():
     """도롱이: 도형을 채운 뒤 빈 칸 중 4방향 이웃이 채워진 칸에 외곽선(K)을 두른다."""
     W, H = 26, 25
@@ -249,7 +149,7 @@ DORONGI = {
     "anchor": 11.5,       # 몸 중심 열 (꼬리 제외)
 }
 
-CHARACTERS = [MOCHI, SQUIRTLE, CHARMANDER, DORONGI]
+CHARACTERS = [MOCHI, DORONGI]
 
 
 # ---------------------------------------------------------------------------
@@ -261,7 +161,7 @@ CHARACTERS = [MOCHI, SQUIRTLE, CHARMANDER, DORONGI]
 #   body   : 외곽선을 두르는 몸체 도형 (그리는 순서대로)
 #   detail : 외곽선 없는 무늬 (배, 볼 등)
 #   face   : 프레임별 얼굴 (0 기본, 1 깜빡, 2 하품, 3 수면)
-#   extra  : 파이리 불꽃 깜빡임 (외곽선 포함)
+#   extra  : 깜빡이는 부분 (외곽선 포함, 없으면 빈 목록)
 # ---------------------------------------------------------------------------
 def C(x, y, r, col): return [0, col, x, y, r]
 def E(x, y, rx, ry, col): return [1, col, x, y, rx, ry]
@@ -310,28 +210,6 @@ SMOOTH = [
         "face": faces([35, 65], 57, 3.6, 5.2, 0x2B2B3A, 68, 5, 0x2B2B3A, 0xE0506A),
         "extra": [],
         "head": [18, 82],
-    },
-    {   # 꼬부기
-        "outline": 0x23303D,
-        "body": [C(85, 78, 9, 0x7FCBEA), E(34, 95, 10, 5, 0x7FCBEA), E(66, 95, 10, 5, 0x7FCBEA),
-                 E(16, 70, 9, 6, 0x7FCBEA), E(84, 70, 9, 6, 0x7FCBEA),
-                 E(50, 76, 32, 21, 0xB8733A), E(50, 38, 33, 29, 0x7FCBEA)],
-        "detail": [E(50, 77, 24, 16, 0xF5E3A3), Ln(30, 76, 70, 76, 2, 0xDCC47E), Ln(34, 84, 66, 84, 2, 0xDCC47E),
-                   E(50, 58, 22, 5, 0x6DB9DB)],
-        "face": faces([37, 63], 37, 6, 8, 0x4A1C1C, 50, 6, 0x23303D, 0xE0506A),
-        "extra": [],
-        "head": [8, 80],
-    },
-    {   # 파이리
-        "outline": 0x3A2320,
-        "body": [E(80, 82, 12, 6, 0xF4893A), E(91, 62, 7, 11, 0xE8402A),
-                 E(36, 96, 10, 5, 0xF4893A), E(64, 96, 10, 5, 0xF4893A),
-                 E(20, 70, 7, 5, 0xF4893A), E(80, 70, 7, 5, 0xF4893A),
-                 E(50, 77, 26, 21, 0xF4893A), E(50, 36, 30, 28, 0xF4893A)],
-        "detail": [E(91, 65, 4, 6, 0xFFD23F), E(50, 80, 17, 15, 0xF7E08A)],
-        "face": faces([38, 62], 34, 5, 7, 0x2B2B3A, 47, 8, 0x3A2320, 0xC8324A),
-        "extra": [E(91, 58, 7, 13, 0xFFD23F), E(91, 62, 4, 8, 0xE8402A)],
-        "head": [6, 78],
     },
     {   # 도롱이
         "outline": 0x2B2A22,

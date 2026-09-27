@@ -1,4 +1,4 @@
-# 전체판 (개인 사용): 모찌 + 꼬부기 + 파이리 + 도롱이
+# 전체판 (개인 사용): 모찌 + 도롱이
 project.manifest = manifest.xml
 base.sourcePath = source;source-full
 base.resourcePath = resources;resources-full

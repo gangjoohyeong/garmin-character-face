@@ -26,8 +26,13 @@ VARIANTS = [
     {"name": "전체판", "jungle": "monkey.jungle", "manifest": "manifest.xml", "src": "source-full", "res": "resources-full"},
     {"name": "스토어판", "jungle": "store.jungle", "manifest": "manifest-store.xml", "src": "source-store", "res": "resources-store"},
 ]
-# 스토어판에 들어가면 안 되는 이름 (저작권)
-NOT_FOR_STORE = ["Squirtle", "Charmander", "Dorongi", "squirtle", "charmander", "dorongi"]
+# 스토어판에 들어가면 안 되는 이름 (원작자 권리 확인 필요)
+NOT_FOR_STORE = ["Dorongi", "dorongi"]
+# 저장소 어디에도 들어가면 안 되는 말 (저작권 문제로 제거한 캐릭터·에셋 출처).
+# 대소문자 무시. 이 파일 자체와 git 기록은 검사하지 않는다.
+BANNED = [b"pok\xc3\xa9mon", b"pokemon", b"pokeapi", b"squirtle", b"charmander", b"nintendo",
+          "포켓몬".encode(), "꼬부기".encode(), "파이리".encode(), "닌텐도".encode()]
+SKIP_DIRS = {".git", "node_modules", "__pycache__", "cache", "out"}
 
 
 def err(msg):
@@ -231,7 +236,25 @@ def check_preview(keys, counts):
             err("미리보기 정보 칸 선택지 %d개 != COUNTS %d" % (n, counts[keys.index("Slot1")]))
 
 
+def check_banned():
+    me = os.path.abspath(__file__)
+    for dirpath, dirs, files in os.walk(ROOT):
+        dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
+        for f in files:
+            path = os.path.join(dirpath, f)
+            if os.path.abspath(path) == me or f.endswith((".png", ".prg", ".iq", ".der")):
+                continue
+            try:
+                data = open(path, "rb").read().lower()
+            except OSError:
+                continue
+            for b in BANNED:
+                if b in data:
+                    err("저작권 문제로 제거한 내용이 남아 있음: '%s' (%s)" % (b.decode(), os.path.relpath(path, ROOT)))
+
+
 def main():
+    check_banned()
     full = None
     for v in VARIANTS:
         eng = check_strings(v)

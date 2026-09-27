@@ -355,7 +355,7 @@
     let p = (nowSec - 947182440) / 86400 / 29.530588853; p -= Math.floor(p);
     return T(p * 8 + 0.5) % 8;
   }
-  const CHARACTER_COUNT = 4;
+  const CHARACTER_COUNT = S.chars.length;
 
   const RING = [];
   for (let i = 0; i < 60; i++) {

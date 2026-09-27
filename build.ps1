@@ -46,7 +46,7 @@ if (-not (Test-Path $key)) {
     Write-Host "개발자 키 생성: $key  (잃어버리지 않게 백업하세요)" -ForegroundColor Yellow
 }
 
-# 3) 스프라이트 재생성 + 외부 에셋(포켓몬 공식 아트, assets\dorongi.png) 가공
+# 3) 스프라이트 재생성 + 도롱이 이미지(assets\dorongi.png) 가공
 if (Get-Command python -ErrorAction SilentlyContinue) {
     python tools\gen_sprites.py
     python -c "import PIL" 2>$null
@@ -60,10 +60,10 @@ if (Get-Command python -ErrorAction SilentlyContinue) {
 
 New-Item -ItemType Directory -Force (Join-Path $root "bin") | Out-Null
 
-# 전체판(개인용, 포켓몬·도롱이 포함) / 스토어판(모찌만)
+# 전체판(개인용, 모찌·도롱이) / 스토어판(모찌만)
 if ($Store) { $jungle = "store.jungle"; $name = "MochiPixel" } else { $jungle = "monkey.jungle"; $name = "PixelPals" }
 if ($Release -and -not $Store) {
-    Write-Warning "전체판에는 포켓몬·도롱이가 들어 있어 스토어에 올리면 안 됩니다. 스토어용은 -Store -Release 를 쓰세요."
+    Write-Warning "전체판에는 도롱이(원작자 권리 확인 필요)가 들어 있어 스토어에 올리면 안 됩니다. 스토어용은 -Store -Release 를 쓰세요."
 }
 
 if ($Release) {
