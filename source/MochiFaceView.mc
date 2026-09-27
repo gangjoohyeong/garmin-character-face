@@ -66,9 +66,10 @@ class MochiFaceView extends WatchUi.WatchFace {
     private var _bgScene as Number = -99;
     private var _bgMoon as Number = -1;
 
-    // 에셋 비트맵 캐시 (한 장만 들고 있음)
-    private var _bmpId as ResourceId or Null = null;
-    private var _bmp as BitmapResource or Null = null;
+    // 에셋 비트맵 캐시 (2장: 기본 표정과 깜빡임 등을 번갈아 불러오지 않도록)
+    private var _bmpIds as Array = [null, null] as Array;
+    private var _bmps as Array = [null, null] as Array;
+    private var _bmpNext as Number = 0;
 
     // 색 테이블
     private var _sky as Array = [
@@ -268,7 +269,7 @@ class MochiFaceView extends WatchUi.WatchFace {
             var x = cx - size / 2;
             var y = baseline - size;
             // 외부 에셋 비트맵이 있으면 사용 (tools/fetch_assets.py)
-            var rid = override >= 0 ? (s == 3 ? Assets.aod(ci) : null) : Assets.get(ci, s);
+            var rid = override >= 0 ? (s == 3 ? Assets.aod(ci) : null) : Assets.get(ci, s, frame);
             if (rid != null) {
                 dc.drawBitmap(x, y + bob, bitmap(rid));
                 return [x + size * 3 / 4, y + size / 8] as Array<Number>;
@@ -287,11 +288,17 @@ class MochiFaceView extends WatchUi.WatchFace {
     }
 
     private function bitmap(rid as ResourceId) as BitmapResource {
-        if (_bmp == null || _bmpId != rid) {
-            _bmp = WatchUi.loadResource(rid) as BitmapResource;
-            _bmpId = rid;
+        for (var i = 0; i < 2; i++) {
+            if (_bmps[i] != null && _bmpIds[i] == rid) {
+                return _bmps[i] as BitmapResource;
+            }
         }
-        return _bmp as BitmapResource;
+        var slot = _bmpNext;
+        _bmps[slot] = null;   // 새로 불러오기 전에 메모리 비우기
+        _bmps[slot] = WatchUi.loadResource(rid) as BitmapResource;
+        _bmpIds[slot] = rid;
+        _bmpNext = 1 - slot;
+        return _bmps[slot] as BitmapResource;
     }
 
     // 크기 설정 → 배율 (maxH 를 넘지 않게)

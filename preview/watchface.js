@@ -40,11 +40,13 @@
   for (const ci of Object.keys(AD)) {
     const load = uri => { const im = new Image(); im.src = uri; return im; };
     ASSETS[ci] = { sizes: {}, aod: load(AD[ci].aod) };
-    for (const s of Object.keys(AD[ci].sizes)) ASSETS[ci].sizes[s] = load(AD[ci].sizes[s]);
+    for (const s of Object.keys(AD[ci].sizes)) ASSETS[ci].sizes[s] = [].concat(AD[ci].sizes[s]).map(load);
   }
-  function assetImage(ci, s, override) {
+  // 표정 이미지가 없으면 기본 표정 (워치의 Assets.get 과 같음)
+  function assetImage(ci, s, override, frame) {
     const a = ASSETS[ci]; if (!a) return null;
-    const im = override >= 0 ? (s === 3 ? a.aod : null) : a.sizes[s];
+    const fr = a.sizes[s];
+    const im = override >= 0 ? (s === 3 ? a.aod : null) : (fr ? (fr[frame] || fr[0]) : null);
     return im && im.complete && im.naturalWidth ? im : null;
   }
 
@@ -226,7 +228,7 @@
     function drawChar(ci, frame, cx, baseline, s, bob, flicker, override) {
       if (smooth) {
         const size = s * 22, x = cx - T(size / 2), y = baseline - size;
-        const im = assetImage(ci, s, override);
+        const im = assetImage(ci, s, override, frame);
         if (im) { dc.ctx.drawImage(im, x, y + bob); return [x + T(size * 3 / 4), y + T(size / 8)]; }
         Smooth.drawCharacter(dc, ci, frame, x, y + bob, size, flicker, override);
         const hd = S.smooth[ci].head;

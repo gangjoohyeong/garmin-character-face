@@ -34,7 +34,7 @@ OUT_DIR = os.path.join(ROOT, "resources-full", "drawables", "assets")
 SOURCES = {
     1: {"name": "squirtle", "url": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/7.png"},
     2: {"name": "charmander", "url": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/4.png"},
-    3: {"name": "dorongi", "file": os.path.join(ROOT, "assets", "dorongi.png")},
+    3: {"name": "dorongi", "file": os.path.join(ROOT, "assets", "dorongi.png"), "faces": True},
 }
 SCALES = [3, 4, 5, 6]          # 워치 코드의 캐릭터 배율 (상자 한 변 = 배율 * 22px)
 AOD_SCALE = 3
@@ -94,6 +94,81 @@ def remove_white_background(img):
         if y > 0: stack.append((x, y - 1))
         if y < h - 1: stack.append((x, y + 1))
     return img
+
+
+# ---------------------------------------------------------------------------
+# 도롱이 표정: 원본 그림의 눈·입을 머리 색으로 지우고 같은 선으로 다시 그린다.
+# 좌표는 원본(460x460) 기준. 크기가 다른 그림이면 비율로 맞춘다.
+# 프레임 순서는 워치 코드와 같음: 0 기본, 1 깜빡, 2 하품, 3 수면, 4 기쁨
+# ---------------------------------------------------------------------------
+DORONGI_FACE = {
+    "eyes": [(165, 112), (273, 112)],
+    "eye_r": 20,                     # 흰 테두리까지 지울 반지름
+    "mouth": (199, 136, 243, 146),   # 원본 입 영역
+    "line": (30, 23, 14, 255),
+    "mouth_in": (214, 104, 116, 255),
+}
+
+
+def _local_color(img, cx, cy, r0, r1):
+    """(cx, cy) 둘레 고리 영역의 중간값 색 (머리 색 샘플)."""
+    px = img.load()
+    cols = []
+    for y in range(int(cy - r1), int(cy + r1) + 1):
+        for x in range(int(cx - r1), int(cx + r1) + 1):
+            d = ((x - cx) ** 2 + (y - cy) ** 2) ** 0.5
+            if r0 <= d <= r1 and 0 <= x < img.width and 0 <= y < img.height and px[x, y][3] == 255:
+                cols.append(px[x, y])
+    cols.sort(key=lambda c: sum(c[:3]))
+    return cols[len(cols) // 2] if cols else (216, 212, 155, 255)
+
+
+def make_faces(img):
+    """원본(기본 표정) → [기본, 깜빡, 하품, 수면, 기쁨] 이미지 5장."""
+    from PIL import ImageDraw
+    k = img.width / 460.0
+    f = {key: v for key, v in DORONGI_FACE.items()}
+    eyes = [(x * k, y * k) for x, y in f["eyes"]]
+    er = f["eye_r"] * k
+    mx0, my0, mx1, my1 = [v * k for v in f["mouth"]]
+    lw = max(2, round(6 * k))       # 워치 크기(66~132px)로 줄여도 보이도록 원본 선보다 조금 굵게
+    line = f["line"]
+
+    def erase_eyes(im):
+        d = ImageDraw.Draw(im)
+        for (cx, cy) in eyes:
+            d.ellipse((cx - er, cy - er, cx + er, cy + er), fill=_local_color(img, cx, cy, er + 2, er + 6))
+        return d
+
+    def erase_mouth(im):
+        d = ImageDraw.Draw(im)
+        c = _local_color(img, (mx0 + mx1) / 2, (my0 + my1) / 2, 14 * k, 20 * k)
+        d.rectangle((mx0, my0, mx1, my1), fill=c)
+        return d
+
+    def closed(d, shape):
+        w = 14 * k
+        for (cx, cy) in eyes:
+            if shape == "line":        # 깜빡: 가로선
+                d.line((cx - w, cy + 2 * k, cx + w, cy + 2 * k), fill=line, width=lw)
+            elif shape == "down":      # 수면: ‿
+                d.arc((cx - w, cy - 12 * k, cx + w, cy + 8 * k), 20, 160, fill=line, width=lw)
+            elif shape == "up":        # 기쁨: ︵ (^ ^)
+                d.arc((cx - w, cy - 4 * k, cx + w, cy + 16 * k), 200, 340, fill=line, width=lw)
+
+    frames = [img.copy()]
+    im = img.copy(); closed(erase_eyes(im), "line"); frames.append(im)            # 1 깜빡
+    im = img.copy(); closed(erase_eyes(im), "down"); d = erase_mouth(im)          # 2 하품
+    cx, cy = (mx0 + mx1) / 2, (my0 + my1) / 2 + 2 * k
+    d.ellipse((cx - 11 * k, cy - 10 * k, cx + 11 * k, cy + 14 * k), fill=line)
+    d.ellipse((cx - 7 * k, cy - 5 * k, cx + 7 * k, cy + 10 * k), fill=f["mouth_in"])
+    frames.append(im)
+    im = img.copy(); closed(erase_eyes(im), "down"); frames.append(im)            # 3 수면
+    im = img.copy(); closed(erase_eyes(im), "up"); d = erase_mouth(im)            # 4 기쁨
+    d.arc((mx0 + 2 * k, my0 - 14 * k, mx1 - 2 * k, my1 + 4 * k), 25, 155, fill=line, width=lw)
+    frames.append(im)
+    return frames
+
 
 
 def fit(img, box):
@@ -174,27 +249,33 @@ def main():
             img = Image.open(io.BytesIO(data)).convert("RGBA")
             if img.getextrema()[3][0] == 255:     # 알파가 전부 불투명 = 배경 있음
                 img = remove_white_background(img)
+            # 표정 프레임 (도롱이만 직접 만듦, 나머지는 기본 표정 1장)
+            frames = make_faces(img) if src.get("faces") else [img]
             made[ci] = {"sizes": {}}
             preview[ci] = {"sizes": {}}
             for s in SCALES:
                 box = s * 22
+                made[ci]["sizes"][s] = []
+                preview[ci]["sizes"][s] = []
+                for fi, fimg in enumerate(frames):
+                    fm = fit(fimg, box)
+                    rid = "Asset%s%d" % (src["name"].capitalize(), box) + ("F%d" % fi if fi else "")
+                    fm.save(os.path.join(OUT_DIR, rid + ".png"))
+                    made[ci]["sizes"][s].append(rid)
+                    preview[ci]["sizes"][s].append(to_data_uri(fm))
                 im = fit(img, box)
-                rid = "Asset%s%d" % (src["name"].capitalize(), box)
-                im.save(os.path.join(OUT_DIR, rid + ".png"))
-                made[ci]["sizes"][s] = rid
-                preview[ci]["sizes"][s] = to_data_uri(im)
                 if s == AOD_SCALE:
                     ol = outline(im)
                     aid = "Asset%sAod" % src["name"].capitalize()
                     ol.save(os.path.join(OUT_DIR, aid + ".png"))
                     made[ci]["aod"] = aid
                     preview[ci]["aod"] = to_data_uri(ol)
-            log("%s: 비트맵 %d개" % (src["name"], len(SCALES) + 1))
+            log("%s: 비트맵 %d개 (표정 %d가지)" % (src["name"], len(SCALES) * len(frames) + 1, len(frames)))
 
     # ---- resources/drawables/assets.xml ----
     lines = ["<drawables>"]
     for ci in sorted(made):
-        for rid in list(made[ci]["sizes"].values()) + [made[ci]["aod"]]:
+        for rid in [r for rs in made[ci]["sizes"].values() for r in rs] + [made[ci]["aod"]]:
             lines.append('    <bitmap id="%s" filename="assets/%s.png" />' % (rid, rid))
     lines.append("</drawables>")
     os.makedirs(os.path.dirname(OUT_DIR), exist_ok=True)
@@ -204,12 +285,17 @@ def main():
     # ---- source/Assets.mc ----
     L = ["// 자동 생성 파일 - tools/fetch_assets.py (커밋하지 않음)",
          "import Toybox.Lang;", "", "module Assets {",
-         "    // 캐릭터 ci, 배율 s 의 비트맵 리소스 (없으면 null → 벡터 그림 사용)",
-         "    function get(ci as Number, s as Number) as ResourceId or Null {"]
+         "    // 캐릭터 ci, 배율 s, 표정 frame 의 비트맵 리소스 (없으면 null → 벡터 그림 사용)",
+         "    // 표정 이미지가 없는 캐릭터는 기본 표정을 돌려준다.",
+         "    function get(ci as Number, s as Number, frame as Number) as ResourceId or Null {"]
     for ci in sorted(made):
         L.append("        if (ci == %d) {" % ci)
-        for s, rid in sorted(made[ci]["sizes"].items()):
-            L.append("            if (s == %d) { return Rez.Drawables.%s; }" % (s, rid))
+        for s, rids in sorted(made[ci]["sizes"].items()):
+            L.append("            if (s == %d) {" % s)
+            for fi, rid in enumerate(rids[1:], 1):
+                L.append("                if (frame == %d) { return Rez.Drawables.%s; }" % (fi, rid))
+            L.append("                return Rez.Drawables.%s;" % rids[0])
+            L.append("            }")
         L.append("        }")
     L += ["        return null;", "    }", "",
           "    // AOD 외곽선 비트맵 (배율 %d)" % AOD_SCALE,
@@ -225,7 +311,8 @@ def main():
         f.write("// 자동 생성 파일 - tools/fetch_assets.py (커밋하지 않음)\n")
         f.write("window.ASSET_DATA = {\n")
         for ci in sorted(preview):
-            sizes = ", ".join('"%d": "%s"' % (s, u) for s, u in sorted(preview[ci]["sizes"].items()))
+            sizes = ", ".join('"%d": [%s]' % (s, ", ".join('"%s"' % u for u in us))
+                              for s, us in sorted(preview[ci]["sizes"].items()))
             f.write('  "%d": { "sizes": { %s }, "aod": "%s" },\n' % (ci, sizes, preview[ci]["aod"]))
         f.write("};\n")
 
