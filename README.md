@@ -2,6 +2,27 @@
 
 하루를 함께 보내는 픽셀 캐릭터 워치페이스입니다.
 
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/pixel-mochi-meadow.png" width="200" alt="픽셀아트 · 모찌 · 풀밭 낮"><br><sub>픽셀아트 · 모찌 · 풀밭 낮</sub></td>
+    <td align="center"><img src="docs/images/pixel-mochi-cherry.png" width="200" alt="벚꽃 풍경 · 아침 하품"><br><sub>벚꽃 풍경 · 아침 하품</sub></td>
+    <td align="center"><img src="docs/images/pixel-mochi-city-night.png" width="200" alt="도시 밤 · 걸음 목표 달성 웃음"><br><sub>도시 밤 · 걸음 목표 달성 웃음</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/images/pixel-dorongi-sea.png" width="200" alt="도롱이 · 바다 저녁"><br><sub>도롱이 · 바다 저녁</sub></td>
+    <td align="center"><img src="docs/images/pixel-dorongi-snow-sleep.png" width="200" alt="설산 · 눈 오는 밤 수면"><br><sub>설산 · 눈 오는 밤 수면</sub></td>
+    <td align="center"><img src="docs/images/pixel-dorongi-space.png" width="200" alt="우주 풍경 · 영어 날짜"><br><sub>우주 풍경 · 영어 날짜</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/images/digital-dorongi-image.png" width="200" alt="디지털 · 도롱이 이미지"><br><sub>디지털 · 도롱이 이미지</sub></td>
+    <td align="center"><img src="docs/images/digital-mochi-autumn.png" width="200" alt="디지털 · 단풍 실루엣 · 비"><br><sub>디지털 · 단풍 실루엣 · 비</sub></td>
+    <td align="center"><img src="docs/images/aod.png" width="200" alt="AOD (항상 켜짐)"><br><sub>AOD (항상 켜짐)</sub></td>
+  </tr>
+</table>
+
+<sub>이미지는 브라우저 미리보기 렌더러로 만든 것입니다 (`cd tools/check && npm run readme-images`). 디지털 스타일의 숫자 글꼴은 실제 워치와 조금 다릅니다.</sub>
+
+
 | 항목 | 선택지 |
 |---|---|
 | 워치페이스 스타일 | 픽셀아트 / 디지털 |

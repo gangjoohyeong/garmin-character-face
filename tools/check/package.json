@@ -6,7 +6,8 @@
   "scripts": {
     "lint": "node lint_mc.mjs ../../source",
     "matrix": "node render_matrix.mjs",
-    "screens": "node store_screens.mjs"
+    "screens": "node store_screens.mjs",
+    "readme-images": "node readme_images.mjs"
   },
   "devDependencies": {
     "@markw65/prettier-plugin-monkeyc": "1.0.69",
